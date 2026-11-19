@@ -1,9 +1,9 @@
 /* PDF Werkstatt – Offline-Speicher. Die App funktioniert nach dem ersten Laden auch ohne Internet. */
-const VERSION = 'pdfw-v1';
+const VERSION = 'pdfw-v2';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './vendor/pdf-lib.min.js', './vendor/Sortable.min.js', './vendor/jszip.min.js',
-  './pdf.min.js', './pdf.worker.min.js', './worker.js', './gs.js',
+  './pdf.min.js', './pdf.worker.min.js', './worker.js', './gs.js', './scan-core.js',
   './fonts/archivo.woff2', './icons/apple-touch-icon.png', './icons/icon-192.png', './icons/icon-512.png'
 ];
 

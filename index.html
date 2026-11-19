@@ -20,7 +20,7 @@
     --line: rgba(255,255,255,.09); --sunk: rgba(255,255,255,.035); --hi: rgba(255,255,255,.14);
     --ok: #4fd18b; --ok-soft: rgba(79,209,139,.12); --err: #ff7a6b; --err-soft: rgba(255,122,107,.12);
     --t-compress: #ff6a52; --t-merge: #5b93ff; --t-pages: #9b84ff; --t-split: #ffa53a;
-    --t-photos: #34c99a; --t-convert: #2fc0de; --t-extras: #f062ad;
+    --t-photos: #34c99a; --t-convert: #2fc0de; --t-extras: #f062ad; --t-scan: #f2c14e;
     --accent: #eef1f6; --accent-ink: #0e1117;
     --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
     --radius: 18px; --shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 12px 32px rgba(0,0,0,.35);
@@ -28,7 +28,7 @@
   }
   #compress { --accent: var(--t-compress); } #merge { --accent: var(--t-merge); } #pages { --accent: var(--t-pages); }
   #split { --accent: var(--t-split); } #photos { --accent: var(--t-photos); } #convert { --accent: var(--t-convert); }
-  #extras { --accent: var(--t-extras); }
+  #extras { --accent: var(--t-extras); } #scan { --accent: var(--t-scan); }
   section:not(#home) { --accent-ink: #ffffff; --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent); }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -310,6 +310,29 @@
   .chips button { background: rgba(255,255,255,.05); }
   .tile, .tag { color: color-mix(in srgb, var(--accent) 75%, #fff); border-color: color-mix(in srgb, var(--accent) 60%, transparent); }
 
+
+  /* Scanner */
+  section#scan { --accent-ink: #1d1604; }
+  #scan .btn.ghost { color: var(--ink); }
+  .scan-ed { position: fixed; inset: 0; z-index: 60; background: #07090d; display: flex; flex-direction: column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  .ed-top { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; gap: 10px; }
+  .ed-top b { font-weight: 650; }
+  .ed-link { background: none; border: 0; color: var(--ink); font: inherit; font-size: 17px; padding: 8px 4px; cursor: pointer; }
+  .ed-link.strong { color: var(--accent); font-weight: 700; }
+  .ed-stage { position: relative; flex: 1; min-height: 0; touch-action: none; overflow: hidden; }
+  .ed-stage canvas#edCanvas { position: absolute; left: 0; top: 0; }
+  .ed-svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+  .ed-svg polygon { fill: color-mix(in srgb, var(--accent) 16%, transparent); stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+  .ed-h { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; touch-action: none; cursor: grab; }
+  .ed-h::after { content: ""; position: absolute; inset: 12px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px var(--accent), 0 2px 10px rgba(0,0,0,.6); }
+  .ed-loupe { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 3px solid var(--accent); box-shadow: 0 6px 24px rgba(0,0,0,.6); pointer-events: none; background: #000; }
+  .ed-preview { position: absolute; inset: 12px; width: calc(100% - 24px); height: calc(100% - 24px); object-fit: contain; }
+  .ed-bottom { padding: 10px 14px 14px; }
+  .ed-row { display: flex; gap: 8px; justify-content: center; }
+  .ed-chip { border: 1px solid var(--line); background: rgba(255,255,255,.07); color: var(--ink); font: inherit; font-size: 15px; border-radius: 999px; padding: 10px 16px; cursor: pointer; }
+  .ed-chip:active { background: rgba(255,255,255,.14); }
+
   /* Info-Fenster */
   .sheet-bg { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center;
     -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
@@ -368,6 +391,11 @@
 
     <h2>Erstellen und umwandeln</h2>
     <div class="binder">
+      <button class="tool" id="openScan" style="--c: var(--t-scan)">
+        <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></svg></span>
+        <span class="tx"><b>Scannen</b><small>Dokumente mit der Kamera erfassen</small></span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
       <button class="tool" id="openPhotos" style="--c: var(--t-photos)">
         <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 8"/></svg></span>
         <span class="tx"><b>Fotos → PDF</b><small>Bilder und Belege als PDF</small></span>
@@ -676,6 +704,106 @@
     <div class="msg err hidden" id="sError"></div>
   </section>
 
+  <!-- Scannen -->
+  <section id="scan" class="hidden">
+    <button class="back" data-home>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Werkzeuge
+    </button>
+    <header style="padding-top:0">
+      <h1>Scannen</h1>
+      <div class="sub">Blatt auf einen dunklen Untergrund legen, von oben fotografieren – den Rest macht die App.</div>
+    </header>
+
+    <div id="scStart">
+      <label class="pick" for="scCam">
+        <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="12" r="3.2"/></svg></span>
+        <b>Seite fotografieren</b>
+        <small>öffnet die Kamera</small>
+      </label>
+      <label class="addmore" for="scLib">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 8"/></svg>
+        Vorhandenes Foto verwenden
+      </label>
+    </div>
+    <input type="file" id="scCam" accept="image/*" capture="environment">
+    <input type="file" id="scLib" accept="image/*" multiple>
+
+    <div id="scBody" class="hidden">
+      <div class="phgrid" id="scGrid"></div>
+      <div class="stack" style="margin-top:12px">
+        <label class="btn ghost" for="scCam">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Weitere Seite scannen
+        </label>
+        <label class="addmore" for="scLib" style="margin-top:0">Vorhandenes Foto hinzufügen</label>
+      </div>
+
+      <h2>Seitengröße</h2>
+      <div class="seg" id="scSize"><button data-v="a4" class="on">A4</button><button data-v="fit">Wie Scan</button></div>
+
+      <h2>Dateiname</h2>
+      <div class="card namefield">
+        <input type="text" id="scName" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Dateiname">
+        <span>.pdf</span>
+      </div>
+
+      <div style="margin-top:18px">
+        <button class="btn" id="scMake">PDF erstellen</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="scWork" style="margin-top:14px">
+      <div class="status" id="scStatus">Bitte warten …</div>
+      <div class="hint" id="scHint"></div>
+      <div class="progress indet" id="scBar"><div></div></div>
+    </div>
+
+    <div class="card hidden" id="scResult" style="margin-top:14px">
+      <div class="result-top">
+        <span class="saving" style="font-size:28px">Fertig</span>
+        <span class="hint" id="scInfo"></span>
+      </div>
+      <div class="stack" style="margin-top:16px">
+        <button class="btn" id="scSave">Speichern / Teilen</button>
+        <button class="btn ghost" id="scCompress">Jetzt auch komprimieren</button>
+        <button class="btn ghost" id="scBack">Weiter bearbeiten</button>
+        <button class="btn ghost" id="scReset">Neuer Scan</button>
+      </div>
+      <div class="msg hidden" id="scSaveMsg"></div>
+    </div>
+
+    <div class="msg err hidden" id="scError"></div>
+
+    <!-- Bearbeiten: Ecken + Filter -->
+    <div class="scan-ed hidden" id="scEd" role="dialog" aria-modal="true" aria-label="Seite bearbeiten">
+      <div class="ed-top">
+        <button class="ed-link" id="edCancel">Abbrechen</button>
+        <b id="edTitle">Ecken anpassen</b>
+        <button class="ed-link strong" id="edNext">Weiter</button>
+      </div>
+      <div class="ed-stage" id="edStage">
+        <canvas id="edCanvas"></canvas>
+        <svg id="edSvg" class="ed-svg"><polygon id="edPoly"></polygon></svg>
+        <div class="ed-h" data-i="0"></div><div class="ed-h" data-i="1"></div><div class="ed-h" data-i="2"></div><div class="ed-h" data-i="3"></div>
+        <canvas class="ed-loupe hidden" id="edLoupe" width="240" height="240"></canvas>
+        <img id="edPreview" class="ed-preview hidden" alt="Vorschau der gescannten Seite">
+      </div>
+      <div class="ed-bottom">
+        <div id="edCornerTools" class="ed-row">
+          <button class="ed-chip" id="edAuto">Automatisch</button>
+          <button class="ed-chip" id="edFull">Ganzes Bild</button>
+        </div>
+        <div id="edFilterTools" class="hidden">
+          <div class="seg" id="edFilter"><button data-v="doc" class="on">Dokument</button><button data-v="gray">Graustufen</button><button data-v="color">Farbe</button></div>
+          <div class="ed-row" style="margin-top:10px">
+            <button class="ed-chip" id="edBackCorners">Ecken ändern</button>
+            <button class="ed-chip" id="edRotate">Drehen ↻</button>
+          </div>
+        </div>
+        <div class="hint" id="edHint" style="text-align:center;margin-top:8px"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- Fotos -> PDF -->
   <section id="photos" class="hidden">
     <button class="back" data-home>
@@ -966,7 +1094,7 @@
       <div class="grip" aria-hidden="true"></div>
       <h3 id="infoTitle">Über die PDF Werkstatt</h3>
       <p>Alle Werkzeuge laufen direkt auf deinem Gerät. Deine Dateien werden nirgendwo hochgeladen oder gespeichert.</p>
-      <p class="fine">Verwendete Bausteine: Ghostscript (AGPL-3.0) für Komprimierung und Passwortschutz, pdf-lib (MIT), PDF.js (Apache-2.0), JSZip (MIT) und SortableJS (MIT).</p>
+      <p class="fine">Verwendete Bausteine: Ghostscript (AGPL-3.0) für Komprimierung und Passwortschutz, pdf-lib (MIT), PDF.js (Apache-2.0), OpenCV (Apache-2.0) für den Scanner, JSZip (MIT) und SortableJS (MIT).</p>
       <p class="fine"><a href="https://ghostscript.com/" target="_blank" rel="noopener">ghostscript.com</a> · <a href="https://github.com/ArtifexSoftware/ghostpdl" target="_blank" rel="noopener">Quellcode von Ghostscript</a></p>
       <button class="btn ghost" id="infoClose">Schließen</button>
     </div>
@@ -976,6 +1104,7 @@
 <script src="vendor/pdf-lib.min.js"></script>
 <script src="vendor/Sortable.min.js"></script>
 <script src="vendor/jszip.min.js"></script>
+<script src="scan-core.js"></script>
 <script>
 (function () {
   'use strict';
@@ -1010,7 +1139,7 @@
   var currentView = 'home';
   function go(view) {
     currentView = view;
-    ['home', 'compress', 'merge', 'pages', 'split', 'photos', 'extras', 'convert'].forEach(function (v) { show($(v), v === view); });
+    ['home', 'compress', 'merge', 'pages', 'split', 'photos', 'extras', 'convert', 'scan'].forEach(function (v) { show($(v), v === view); });
     if (typeof syncPagesBar === 'function') syncPagesBar();
     window.scrollTo(0, 0);
   }
@@ -1019,10 +1148,11 @@
   $('openPages').addEventListener('click', function () { go('pages'); });
   $('openSplit').addEventListener('click', function () { go('split'); });
   $('openPhotos').addEventListener('click', function () { go('photos'); });
+  $('openScan').addEventListener('click', function () { go('scan'); });
   $('openExtras').addEventListener('click', function () { go('extras'); });
   $('openConvert').addEventListener('click', function () { go('convert'); });
   $('backHome').addEventListener('click', function () { if (!state.busy) go('home'); });
-  document.querySelectorAll('[data-home]').forEach(function (b) { b.addEventListener('click', function () { if (!merge.busy && !pg.busy && !sp.busy && !ph.busy && !xt.busy && !cv.busy) go('home'); }); });
+  document.querySelectorAll('[data-home]').forEach(function (b) { b.addEventListener('click', function () { if (!merge.busy && !pg.busy && !sp.busy && !ph.busy && !xt.busy && !cv.busy && !sc.busy) go('home'); }); });
 
   // ---------- Datei wählen ----------
   var fileInput = $('fileInput');
@@ -2577,6 +2707,354 @@
     } catch (e) { el.className = 'msg info'; el.textContent = 'Kopieren hier nicht möglich. Markiere den Text im Feld oben und kopiere ihn.'; }
   });
   $('cBack').addEventListener('click', function () { cv.result = null; show($('cResult'), false); show($('cBody'), true); syncConvert(); });
+
+  // ---------- Scannen ----------
+  var sc = { pages: [], busy: false, result: null, nextId: 1, edit: null };
+  var ocvPromise = null;
+
+  function scError(t) { var e = $('scError'); e.textContent = t || ''; show(e, !!t); }
+  function scWork(on, status, hint) {
+    show($('scWork'), on);
+    if (status) $('scStatus').textContent = status;
+    $('scHint').textContent = hint || '';
+  }
+  function defaultScanName() {
+    var d = new Date(), z = function (n) { return (n < 10 ? '0' : '') + n; };
+    return 'Scan ' + d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + ' ' + z(d.getHours()) + z(d.getMinutes());
+  }
+
+  // OpenCV einmalig laden (ca. 13 MB, danach im Offline-Speicher)
+  function loadOpenCV(onPct) {
+    if (!ocvPromise) {
+      ocvPromise = fetch('vendor/opencv.js').then(function (res) {
+        if (!res.ok) throw new Error('Scanner konnte nicht geladen werden (' + res.status + ')');
+        var total = Number(res.headers.get('content-length')) || 13298869;
+        if (!res.body || !res.body.getReader) return res.blob();
+        var reader = res.body.getReader(), chunks = [], got = 0;
+        var pump = function () {
+          return reader.read().then(function (r) {
+            if (r.done) return new Blob(chunks, { type: 'text/javascript' });
+            chunks.push(r.value); got += r.value.length;
+            if (onPct) onPct(Math.min(99, Math.round(got / total * 100)));
+            return pump();
+          });
+        };
+        return pump();
+      }).then(function (blob) {
+        return new Promise(function (resolve, reject) {
+          var url = URL.createObjectURL(blob), el = document.createElement('script');
+          el.src = url;
+          el.onload = function () { URL.revokeObjectURL(url); resolve(); };
+          el.onerror = function () { reject(new Error('Scanner konnte nicht gestartet werden.')); };
+          document.head.appendChild(el);
+        });
+      }).then(function () {
+        var c = window.cv;
+        if (c && typeof c.then === 'function') return c.then(function (m) { window.cv = m; return m; });
+        if (c && c.Mat) return c;
+        return new Promise(function (r) { c.onRuntimeInitialized = function () { r(c); }; });
+      });
+      ocvPromise.catch(function () { ocvPromise = null; });
+    }
+    return ocvPromise;
+  }
+
+  // Foto laden (Ausrichtung wie in der Fotos-App), max. 3000 px lange Seite
+  function fileToCanvas(file) {
+    return new Promise(function (res, rej) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var s = Math.min(1, 3000 / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url); res(c);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('Dieses Foto kann nicht gelesen werden.')); };
+      img.src = url;
+    });
+  }
+
+  $('scCam').addEventListener('change', function () { var f = Array.prototype.slice.call(this.files || []); this.value = ''; if (f.length) addScans(f); });
+  $('scLib').addEventListener('change', function () { var f = Array.prototype.slice.call(this.files || []); this.value = ''; if (f.length) addScans(f); });
+
+  // Neue Fotos nacheinander durch den Editor schicken
+  function addScans(files) {
+    scError(''); sc.result = null; show($('scResult'), false);
+    var queue = files.slice();
+    var next = function () {
+      if (!queue.length) return;
+      var f = queue.shift();
+      var page = { id: sc.nextId++, file: f, corners: null, filter: 'doc', rot: 0, out: null, thumb: null };
+      openEditor(page, true).then(function (ok) { if (ok) sc.pages.push(page); renderScans(); next(); });
+    };
+    next();
+  }
+
+  // ----- Editor -----
+  var ed = { page: null, isNew: false, canvas: null, scale: 1, ox: 0, oy: 0, corners: null, step: 'corners', warped: null, done: null, previewUrl: null };
+
+  function openEditor(page, isNew) {
+    return new Promise(function (done) {
+      ed.page = page; ed.isNew = isNew; ed.done = done; ed.step = 'corners';
+      ed.filter = page.filter; ed.rot = page.rot;
+      show($('scEd'), true); document.body.style.overflow = 'hidden';
+      setEdStep('corners'); $('edHint').textContent = '';
+      var needsLoad = !window.cv || !window.cv.Mat;
+      show($('scWork'), false);
+      $('edHint').textContent = needsLoad ? 'Scanner wird vorbereitet … (nur beim ersten Mal, ca. 13 MB)' : 'Erkenne Blatt …';
+      Promise.all([loadOpenCV(function (p) { $('edHint').textContent = 'Scanner wird vorbereitet … ' + p + ' %'; }), fileToCanvas(page.file)])
+        .then(function (r) {
+          ed.cvx = r[0]; ed.canvas = r[1];
+          layoutEditor();
+          if (page.corners) { ed.corners = page.corners.map(function (p) { return { x: p.x, y: p.y }; }); $('edHint').textContent = 'Ecken mit dem Finger verschieben.'; }
+          else autoDetect();
+          drawOverlay();
+        })
+        .catch(function (e) { closeEditor(false); scError(e.message || 'Der Scanner konnte nicht gestartet werden.'); });
+    });
+  }
+
+  function fullCorners() { var w = ed.canvas.width, h = ed.canvas.height; return [{ x: 0, y: 0 }, { x: w, y: 0 }, { x: w, y: h }, { x: 0, y: h }]; }
+
+  function autoDetect() {
+    var cvx = ed.cvx, src = cvx.imread(ed.canvas), c = null;
+    try { c = ScanCore.detectCorners(cvx, src); } catch (e) { c = null; }
+    src.delete();
+    if (c) { ed.corners = c; $('edHint').textContent = 'Blatt erkannt. Ecken bei Bedarf mit dem Finger verschieben.'; }
+    else {
+      var w = ed.canvas.width, h = ed.canvas.height, m = 0.08;
+      ed.corners = [{ x: w * m, y: h * m }, { x: w * (1 - m), y: h * m }, { x: w * (1 - m), y: h * (1 - m) }, { x: w * m, y: h * (1 - m) }];
+      $('edHint').textContent = 'Kein Blatt gefunden – bitte die Ecken selbst auf die Blattecken ziehen.';
+    }
+    drawOverlay();
+  }
+
+  function layoutEditor() {
+    var stage = $('edStage'), W = stage.clientWidth, H = stage.clientHeight, pad = 22;
+    var c = ed.canvas, s = Math.min((W - pad * 2) / c.width, (H - pad * 2) / c.height);
+    ed.scale = s; ed.ox = Math.round((W - c.width * s) / 2); ed.oy = Math.round((H - c.height * s) / 2);
+    var view = $('edCanvas'), dpr = window.devicePixelRatio || 1;
+    view.width = Math.round(c.width * s * dpr); view.height = Math.round(c.height * s * dpr);
+    view.style.width = Math.round(c.width * s) + 'px'; view.style.height = Math.round(c.height * s) + 'px';
+    view.style.left = ed.ox + 'px'; view.style.top = ed.oy + 'px';
+    view.getContext('2d').drawImage(c, 0, 0, view.width, view.height);
+  }
+
+  function toScreen(p) { return { x: ed.ox + p.x * ed.scale, y: ed.oy + p.y * ed.scale }; }
+
+  function drawOverlay() {
+    if (!ed.corners) return;
+    var pts = ed.corners.map(toScreen);
+    $('edPoly').setAttribute('points', pts.map(function (p) { return p.x + ',' + p.y; }).join(' '));
+    document.querySelectorAll('.ed-h').forEach(function (h) {
+      var p = pts[+h.dataset.i]; h.style.left = p.x + 'px'; h.style.top = p.y + 'px';
+    });
+  }
+
+  // Ecken ziehen, mit Lupe
+  document.querySelectorAll('.ed-h').forEach(function (h) {
+    h.addEventListener('pointerdown', function (e) {
+      if (ed.step !== 'corners' || !ed.corners) return;
+      e.preventDefault(); h.setPointerCapture(e.pointerId);
+      var i = +h.dataset.i, loupe = $('edLoupe');
+      var move = function (ev) {
+        var r = $('edStage').getBoundingClientRect();
+        var x = (ev.clientX - r.left - ed.ox) / ed.scale, y = (ev.clientY - r.top - ed.oy) / ed.scale;
+        x = Math.max(0, Math.min(ed.canvas.width, x)); y = Math.max(0, Math.min(ed.canvas.height, y));
+        ed.corners[i] = { x: x, y: y }; drawOverlay();
+        // Lupe: Ausschnitt um die Ecke, 2,5-fach
+        var lc = loupe.getContext('2d'), z = 2.5, half = 120 / z / ed.scale;
+        lc.fillStyle = '#000'; lc.fillRect(0, 0, 240, 240);
+        lc.drawImage(ed.canvas, x - half, y - half, half * 2, half * 2, 0, 0, 240, 240);
+        lc.strokeStyle = 'rgba(255,255,255,.9)'; lc.lineWidth = 2;
+        lc.beginPath(); lc.moveTo(120, 96); lc.lineTo(120, 144); lc.moveTo(96, 120); lc.lineTo(144, 120); lc.stroke();
+        var sp = toScreen(ed.corners[i]);
+        loupe.style.left = Math.max(4, Math.min(r.width - 124, sp.x - 60)) + 'px';
+        loupe.style.top = (sp.y - 150 < 4 ? sp.y + 40 : sp.y - 150) + 'px';
+        show(loupe, true);
+      };
+      var up = function () {
+        h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
+        show(loupe, false);
+      };
+      h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+      move(e);
+    });
+  });
+
+  window.addEventListener('resize', function () { if (!$('scEd').classList.contains('hidden') && ed.canvas && ed.step === 'corners') { layoutEditor(); drawOverlay(); } });
+
+  function setEdStep(step) {
+    ed.step = step;
+    var corners = step === 'corners';
+    $('edTitle').textContent = corners ? 'Ecken anpassen' : 'Filter wählen';
+    $('edNext').textContent = corners ? 'Weiter' : (ed.isNew ? 'Übernehmen' : 'Fertig');
+    show($('edCornerTools'), corners); show($('edFilterTools'), !corners);
+    show($('edCanvas'), corners); show($('edSvg'), corners); show($('edPreview'), !corners);
+    document.querySelectorAll('.ed-h').forEach(function (h) { show(h, corners); });
+  }
+
+  function renderPreview() {
+    var cvx = ed.cvx, enh = ScanCore.enhance(cvx, ed.warped, ed.filter), rot = ScanCore.rotate(cvx, enh, ed.rot);
+    var c = document.createElement('canvas'); cvx.imshow(c, rot);
+    enh.delete(); rot.delete();
+    return new Promise(function (res) {
+      c.toBlob(function (b) {
+        if (ed.previewUrl) URL.revokeObjectURL(ed.previewUrl);
+        ed.previewUrl = URL.createObjectURL(b); $('edPreview').src = ed.previewUrl;
+        ed.result = { blob: b, w: c.width, h: c.height };
+        c.width = c.height = 0; res();
+      }, 'image/jpeg', 0.85);
+    });
+  }
+
+  $('edAuto').addEventListener('click', function () { if (ed.cvx) autoDetect(); });
+  $('edFull').addEventListener('click', function () { if (ed.canvas) { ed.corners = fullCorners(); drawOverlay(); $('edHint').textContent = 'Ganzes Foto ausgewählt.'; } });
+  $('edBackCorners').addEventListener('click', function () { setEdStep('corners'); layoutEditor(); drawOverlay(); $('edHint').textContent = 'Ecken mit dem Finger verschieben.'; });
+  $('edRotate').addEventListener('click', function () { ed.rot = (ed.rot + 90) % 360; renderPreview(); });
+  $('edFilter').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b || !ed.warped) return;
+    $('edFilter').querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    ed.filter = b.dataset.v; $('edHint').textContent = 'Wird berechnet …';
+    setTimeout(function () { renderPreview().then(function () { $('edHint').textContent = ''; }); }, 30);
+  });
+
+  $('edNext').addEventListener('click', function () {
+    if (!ed.cvx || !ed.corners) return;
+    if (ed.step === 'corners') {
+      $('edHint').textContent = 'Wird gerade gezogen und aufgehellt …';
+      setTimeout(function () {
+        if (ed.warped) ed.warped.delete();
+        var src = ed.cvx.imread(ed.canvas);
+        ed.warped = ScanCore.warp(ed.cvx, src, ScanCore.orderCorners(ed.corners), 2400);
+        src.delete();
+        $('edFilter').querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x.dataset.v === ed.filter); });
+        setEdStep('filter');
+        renderPreview().then(function () { $('edHint').textContent = 'So sieht deine Seite aus.'; });
+      }, 30);
+      return;
+    }
+    // Übernehmen
+    var p = ed.page;
+    p.corners = ed.corners.map(function (c) { return { x: c.x, y: c.y }; });
+    p.filter = ed.filter; p.rot = ed.rot; p.out = ed.result;
+    makeThumb(ed.result.blob).then(function (t) { if (p.thumb) URL.revokeObjectURL(p.thumb); p.thumb = t; closeEditor(true); });
+  });
+  $('edCancel').addEventListener('click', function () { closeEditor(false); });
+
+  function closeEditor(ok) {
+    show($('scEd'), false); document.body.style.overflow = '';
+    if (ed.warped) { ed.warped.delete(); ed.warped = null; }
+    if (ed.previewUrl) { URL.revokeObjectURL(ed.previewUrl); ed.previewUrl = null; }
+    if (ed.canvas) { ed.canvas.width = ed.canvas.height = 0; ed.canvas = null; }
+    ed.corners = null;
+    var d = ed.done; ed.done = null; if (d) d(ok);
+  }
+
+  function makeThumb(blob) {
+    return new Promise(function (res) {
+      var url = URL.createObjectURL(blob), img = new Image();
+      img.onload = function () {
+        var s = 300 / Math.max(img.width, img.height), c = document.createElement('canvas');
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+        c.toBlob(function (b) { res(URL.createObjectURL(b)); }, 'image/jpeg', 0.8);
+      };
+      img.src = url;
+    });
+  }
+
+  // ----- Seitenliste -----
+  var scGrid = $('scGrid');
+  if (window.Sortable) {
+    Sortable.create(scGrid, {
+      animation: 150, delay: 250, delayOnTouchOnly: true, touchStartThreshold: 5, filter: 'button', preventOnFilter: false,
+      onEnd: function (e) {
+        if (e.oldIndex === e.newIndex) return;
+        var order = Array.prototype.map.call(scGrid.children, function (el) { return +el.dataset.id; });
+        sc.pages.sort(function (a, b) { return order.indexOf(a.id) - order.indexOf(b.id); });
+        renderScans();
+      }
+    });
+  }
+
+  function renderScans() {
+    var has = sc.pages.length > 0;
+    show($('scStart'), !has); show($('scBody'), has && !sc.result && !sc.busy);
+    if (has && !$('scName').value) $('scName').value = defaultScanName();
+    scGrid.innerHTML = '';
+    sc.pages.forEach(function (p, i) {
+      var el = document.createElement('div'); el.className = 'ph'; el.dataset.id = p.id;
+      el.innerHTML = '<div class="thumb"><img alt=""></div><div class="tools"><b></b><span>' +
+        '<button data-a="edit" aria-label="Bearbeiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg></button>' +
+        '<button data-a="del" aria-label="Entfernen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>';
+      el.querySelector('img').src = p.thumb;
+      el.querySelector('b').textContent = (i + 1) + '.';
+      el.querySelector('[data-a=edit]').addEventListener('click', function () { openEditor(p, false).then(function () { renderScans(); }); });
+      el.querySelector('[data-a=del]').addEventListener('click', function () {
+        sc.pages = sc.pages.filter(function (x) { return x !== p; }); if (p.thumb) URL.revokeObjectURL(p.thumb); renderScans();
+      });
+      scGrid.appendChild(el);
+    });
+    $('scMake').textContent = sc.pages.length === 1 ? 'PDF erstellen (1 Seite)' : 'PDF erstellen (' + sc.pages.length + ' Seiten)';
+  }
+
+  var scSize = 'a4';
+  $('scSize').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    $('scSize').querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); }); scSize = b.dataset.v;
+  });
+  function scanFileName() {
+    var n = ($('scName').value || '').trim().replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|]+/g, '-');
+    return (n || defaultScanName()) + '.pdf';
+  }
+
+  $('scMake').addEventListener('click', function () {
+    if (sc.busy || !sc.pages.length) return;
+    if (!window.PDFLib) { scError('Die PDF-Bibliothek konnte nicht geladen werden. Bitte Seite neu laden.'); return; }
+    sc.busy = true; scError(''); show($('scBody'), false); scWork(true, 'Erstelle PDF …');
+    var pages = sc.pages.slice(), out, i = 0, A4W = 595.28, A4H = 841.89;
+    PDFLib.PDFDocument.create().then(function (d) {
+      out = d;
+      var next = function () {
+        if (i >= pages.length) return Promise.resolve();
+        var p = pages[i++];
+        return p.out.blob.arrayBuffer().then(function (buf) { return out.embedJpg(buf); }).then(function (jpg) {
+          var w = p.out.w, h = p.out.h, pw, phh;
+          if (scSize === 'fit') { var k = A4H / Math.max(w, h); pw = w * k; phh = h * k; }
+          else { var land = w > h; pw = land ? A4H : A4W; phh = land ? A4W : A4H; }
+          var page = out.addPage([pw, phh]), s2 = Math.min(pw / w, phh / h), iw = w * s2, ih = h * s2;
+          page.drawImage(jpg, { x: (pw - iw) / 2, y: (phh - ih) / 2, width: iw, height: ih });
+          return next();
+        });
+      };
+      return next();
+    }).then(function () {
+      out.setTitle(scanFileName().replace(/\.pdf$/, '')); out.setProducer('PDF Werkstatt');
+      return out.save();
+    }).then(function (bytes) {
+      sc.busy = false; sc.result = { data: bytes };
+      scWork(false);
+      $('scInfo').textContent = pages.length + (pages.length === 1 ? ' Seite, ' : ' Seiten, ') + fmt(bytes.byteLength);
+      show($('scSaveMsg'), false); show($('scResult'), true); window.scrollTo(0, 0);
+    }).catch(function (e) {
+      sc.busy = false; scWork(false); show($('scBody'), true);
+      scError('PDF konnte nicht erstellt werden: ' + (e && e.message ? e.message : 'unbekannter Fehler'));
+    });
+  });
+  $('scSave').addEventListener('click', function () { if (sc.result) savePdf(scanFileName(), sc.result.data, $('scSaveMsg')); });
+  $('scBack').addEventListener('click', function () { sc.result = null; show($('scResult'), false); renderScans(); });
+  $('scReset').addEventListener('click', function () {
+    sc.pages.forEach(function (p) { if (p.thumb) URL.revokeObjectURL(p.thumb); });
+    sc.pages = []; sc.result = null; $('scName').value = ''; show($('scResult'), false); scError(''); renderScans();
+  });
+  $('scCompress').addEventListener('click', function () {
+    if (!sc.result) return;
+    var f; try { f = new File([sc.result.data], scanFileName(), { type: 'application/pdf' }); }
+    catch (e) { f = new Blob([sc.result.data], { type: 'application/pdf' }); f.name = scanFileName(); }
+    go('compress'); setFile(f);
+  });
 
   // ---------- Info-Fenster ----------
   (function () {
