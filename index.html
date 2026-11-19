@@ -1,0 +1,2605 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1117">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PDF Werkstatt">
+<title>PDF Werkstatt</title>
+<style>
+  @font-face { font-family: "Archivo"; src: url("fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; font-style: normal; font-display: swap; }
+  :root {
+    color-scheme: dark;
+    --bg: #0e1117; --card: rgba(255,255,255,.045); --card-solid: #171b23; --ink: #eef1f6; --muted: #8e97a6;
+    --line: rgba(255,255,255,.09); --sunk: rgba(255,255,255,.035); --hi: rgba(255,255,255,.14);
+    --ok: #4fd18b; --ok-soft: rgba(79,209,139,.12); --err: #ff7a6b; --err-soft: rgba(255,122,107,.12);
+    --t-compress: #ff6a52; --t-merge: #5b93ff; --t-pages: #9b84ff; --t-split: #ffa53a;
+    --t-photos: #34c99a; --t-convert: #2fc0de; --t-extras: #f062ad;
+    --accent: #eef1f6; --accent-ink: #0e1117;
+    --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+    --radius: 18px; --shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 12px 32px rgba(0,0,0,.35);
+    --display: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  #compress { --accent: var(--t-compress); } #merge { --accent: var(--t-merge); } #pages { --accent: var(--t-pages); }
+  #split { --accent: var(--t-split); } #photos { --accent: var(--t-photos); } #convert { --accent: var(--t-convert); }
+  #extras { --accent: var(--t-extras); }
+  section:not(#home) { --accent-ink: #ffffff; --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent); }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: calc(env(safe-area-inset-top) + 14px) calc(env(safe-area-inset-right) + 16px)
+             calc(env(safe-area-inset-bottom) + 32px) calc(env(safe-area-inset-left) + 16px);
+  }
+  .wrap { max-width: 560px; margin: 0 auto; }
+  header { padding: 4px 2px 18px; }
+  h1 { font-family: var(--display); font-stretch: 112%; font-weight: 800; font-size: 30px; line-height: 1.05; margin: 0; letter-spacing: -.015em; }
+  section:not(#home) header h1 { display: flex; align-items: center; gap: 12px; }
+  section:not(#home) header h1::before { content: ""; width: 8px; height: 30px; border-radius: 3px; background: var(--accent); flex: none; }
+  .sub { color: var(--muted); margin-top: 8px; font-size: 15px; display: flex; align-items: center; gap: 6px; max-width: 46ch; }
+  .sub svg { flex: none; }
+  h2 { font-size: 15px; font-weight: 650; color: var(--muted); margin: 24px 4px 8px; letter-spacing: 0; }
+
+  /* Startseite */
+  .hero { position: relative; padding: 18px 2px 8px; }
+  .brand { font-size: 44px; font-stretch: 118%; font-weight: 850; line-height: .95; letter-spacing: -.025em; }
+  .lead { display: flex; align-items: center; gap: 7px; margin: 14px 0 0; color: var(--muted); font-size: 15px; }
+  .lead svg { flex: none; color: var(--ok); }
+  /* Kleines Register-Blatt: jede Farbe steht für ein Werkzeug */
+  .fan { position: absolute; right: 14px; top: 20px; width: 66px; height: 86px; border-radius: 6px; background: var(--card);
+    border: 1px solid var(--line); box-shadow: var(--shadow); transform: rotate(4deg); }
+  .fan::before { content: ""; position: absolute; left: 10px; right: 14px; top: 14px; height: 40px;
+    background: repeating-linear-gradient(var(--line) 0 3px, transparent 3px 9px); border-radius: 2px; }
+  .fan i { position: absolute; right: -9px; width: 12px; height: 9px; border-radius: 0 3px 3px 0; background: var(--c); }
+  .fan i:nth-child(1) { top: 6px; } .fan i:nth-child(2) { top: 17px; } .fan i:nth-child(3) { top: 28px; } .fan i:nth-child(4) { top: 39px; }
+  .fan i:nth-child(5) { top: 50px; } .fan i:nth-child(6) { top: 61px; } .fan i:nth-child(7) { top: 72px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .fan i { animation: slide .5s cubic-bezier(.2,.8,.2,1) both; }
+    .fan i:nth-child(2) { animation-delay: .05s; } .fan i:nth-child(3) { animation-delay: .1s; } .fan i:nth-child(4) { animation-delay: .15s; }
+    .fan i:nth-child(5) { animation-delay: .2s; } .fan i:nth-child(6) { animation-delay: .25s; } .fan i:nth-child(7) { animation-delay: .3s; }
+  }
+  @keyframes slide { from { transform: translateX(-10px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .binder { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .tool { display: flex; align-items: stretch; width: 100%; border: 0; background: none; padding: 0; margin: 0; text-align: left;
+    color: var(--ink); font: inherit; cursor: pointer; min-height: 68px; }
+  .tool + .tool .tx, .tool + .tool .chev { border-top: 1px solid var(--line); }
+  .tool .tab { width: 56px; flex: none; display: grid; place-items: center; background: var(--c); color: #fff; }
+  .tool + .tool .tab { box-shadow: inset 0 1px 0 rgba(255,255,255,.22); }
+  .tool .tx { flex: 1; min-width: 0; padding: 12px 8px 12px 16px; display: flex; flex-direction: column; justify-content: center; }
+  .tool b { font-weight: 650; font-size: 17px; }
+  .tool small { color: var(--muted); font-size: 14px; margin-top: 1px; }
+  .tool .chev { box-sizing: content-box; width: 18px; height: auto; padding: 0 14px 0 4px; color: var(--muted); opacity: .7; align-self: stretch; }
+  .tool:active .tx, .tool:active .chev { background: var(--sunk); }
+  .tool:focus-visible { outline: 3px solid var(--c); outline-offset: -3px; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; }
+  .back { background: none; border: 0; color: var(--accent); font: inherit; font-size: 17px; padding: 6px 0; margin: 0 0 6px;
+    display: inline-flex; align-items: center; gap: 2px; cursor: pointer; }
+  .hidden { display: none !important; }
+
+  .pick {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center;
+    border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: var(--radius); padding: 30px 16px; background: color-mix(in srgb, var(--accent) 4%, var(--card)); cursor: pointer;
+  }
+  .pick .ico { width: 52px; height: 52px; border-radius: 14px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+  .pick b { font-size: 17px; }
+  .pick small { color: var(--muted); }
+  .pick.drag { border-color: var(--accent); }
+  input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+  .file { display: flex; align-items: center; gap: 12px; }
+  .file .ico { width: 40px; height: 48px; flex: none; border-radius: 6px 12px 6px 6px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 700; font-size: 12px; }
+  .file .meta { flex: 1; min-width: 0; }
+  .file .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file .size { color: var(--muted); font-size: 14px; }
+  .link { background: none; border: 0; color: var(--accent); font: inherit; font-size: 15px; cursor: pointer; padding: 8px 4px; }
+
+  .levels { display: grid; gap: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .levels .level { border: 0 !important; border-radius: 0 !important; border-top: 1px solid var(--line) !important; }
+  .levels .level:first-child { border-top: 0 !important; }
+  .levels .level:has(input:checked) { box-shadow: inset 4px 0 0 var(--accent); }
+  .level small { line-height: 1.35; display: block; margin-top: 2px; }
+  .level { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px;
+    background: var(--card); cursor: pointer; }
+  .level input { appearance: none; -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); margin: 0; flex: none; display: grid; place-items: center; }
+  .level input:checked { border-color: var(--accent); }
+  .level input:checked::after { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+  .level:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+  .level .t { flex: 1; }
+  .level b { display: block; font-weight: 600; }
+  .level small { color: var(--muted); font-size: 13px; }
+  .tag { font-size: 11px; font-weight: 700; color: var(--accent); background: var(--card); border: 1px solid var(--accent); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+
+  .custom { display: grid; gap: 14px; margin-top: 4px; }
+  .slider label { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 6px; }
+  .slider label span { color: var(--muted); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--accent); height: 28px; }
+
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .row .t small { display: block; color: var(--muted); font-size: 13px; }
+  .switch { position: relative; width: 51px; height: 31px; flex: none; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 51px; height: 31px; border-radius: 999px; background: var(--line); margin: 0; cursor: pointer; transition: background .2s; }
+  .switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: transform .2s; }
+  .switch input:checked { background: var(--ok); }
+  .switch input:checked::after { transform: translateX(20px); }
+
+  .btn { width: 100%; border: 0; border-radius: 13px; padding: 16px; font: inherit; font-size: 17px; font-weight: 650; cursor: pointer;
+    background: var(--accent); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 550; }
+  .btn:not(.ghost):not(:disabled):active { filter: brightness(.92); }
+  .btn:focus-visible, .seg button:focus-visible, .link:focus-visible, .back:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
+  .stack { display: grid; gap: 10px; }
+
+  .progress { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; margin-top: 12px; }
+  .progress > div { height: 100%; width: 0; background: var(--accent); border-radius: 999px; transition: width .25s; }
+  .progress.indet > div { width: 35%; animation: indet 1.2s ease-in-out infinite; }
+  @keyframes indet { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
+  .status { font-weight: 600; }
+  .hint { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  .result-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .saving { font-family: var(--display); font-stretch: 112%; font-size: 40px; font-weight: 800; letter-spacing: -.02em; color: var(--ok); line-height: 1; }
+  .saving.neutral { color: var(--muted); font-size: 24px; }
+  .compare { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; margin-top: 14px; }
+  .compare div { background: var(--bg); border-radius: 12px; padding: 10px 12px; }
+  .compare small { display: block; color: var(--muted); font-size: 12px; }
+  .compare b { font-size: 18px; font-variant-numeric: tabular-nums; }
+  .compare .arrow { background: none; padding: 0; color: var(--muted); }
+  .msg { border-radius: 12px; padding: 12px 14px; font-size: 15px; margin-top: 12px; }
+  .msg.err { background: var(--err-soft); color: var(--ink); box-shadow: inset 3px 0 0 var(--err); }
+  .msg.info { background: var(--sunk); color: var(--ink); }
+  .msg.ok { background: var(--ok-soft); box-shadow: inset 3px 0 0 var(--ok); }
+  .mlist { display: grid; gap: 8px; }
+  .mitem { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 8px 10px 4px; box-shadow: var(--shadow); }
+  .mitem .handle { width: 40px; height: 44px; flex: none; display: grid; place-items: center; color: var(--muted); cursor: grab; touch-action: none; font-size: 22px; }
+  .mitem .num { width: 26px; height: 26px; flex: none; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 700; display: grid; place-items: center; }
+  .mitem .meta { flex: 1; min-width: 0; }
+  .mitem .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mitem .size { color: var(--muted); font-size: 13px; }
+  .mitem .size.bad { color: var(--accent); }
+  .mitem .del { width: 40px; height: 40px; flex: none; border: 0; background: none; color: var(--muted); border-radius: 10px; cursor: pointer; display: grid; place-items: center; }
+  .sortable-ghost { opacity: .35; }
+  .sortable-chosen { box-shadow: 0 8px 24px rgba(0,0,0,.15); }
+  .addmore { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; padding: 14px; border: 1.5px dashed var(--line); border-radius: 14px; color: var(--accent); font-weight: 600; cursor: pointer; }
+  .namefield { display: flex; align-items: center; gap: 4px; padding: 4px 16px; }
+  .namefield input { flex: 1; min-width: 0; border: 0; background: none; color: var(--ink); font: inherit; font-size: 17px; padding: 12px 0; outline: none; }
+  .namefield span { color: var(--muted); }
+  .pgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+  @media (min-width: 520px) { .pgrid { grid-template-columns: repeat(4, 1fr); } }
+  .pg { position: relative; cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .pg .thumb { aspect-ratio: 1 / 1.3; border-radius: 10px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow);
+    display: grid; place-items: center; overflow: hidden; transition: outline-color .15s; outline: 3px solid transparent; outline-offset: 2px; }
+  .pg .thumb img { max-width: 92%; max-height: 92%; display: block; box-shadow: 0 0 0 1px rgba(0,0,0,.08); background: #fff; transition: transform .2s; }
+  .pg .thumb .ph { width: 60%; height: 70%; background: var(--line); border-radius: 4px; }
+  .pg.sel .thumb { outline-color: var(--accent); }
+  .pg .check { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; background: rgba(0,0,0,.25);
+    display: grid; place-items: center; color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+  .pg.sel .check { background: var(--accent); }
+  .pg .check svg { opacity: 0; }
+  .pg.sel .check svg { opacity: 1; }
+  .pg .no { text-align: center; font-size: 13px; color: var(--muted); margin-top: 5px; font-variant-numeric: tabular-nums; }
+  .pg .no b { color: var(--ink); font-weight: 600; }
+  .pg.sortable-chosen .thumb { transform: scale(1.04); }
+  .pbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: color-mix(in srgb, var(--card) 92%, transparent);
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-top: 1px solid var(--line);
+    padding: 10px calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 10px) calc(env(safe-area-inset-left) + 12px); }
+  .pbar-in { max-width: 560px; margin: 0 auto; display: grid; gap: 8px; }
+  .pbar-sel { font-size: 13px; color: var(--muted); text-align: center; }
+  .pbar-btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .tbtn { border: 0; background: none; color: var(--ink); font: inherit; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; border-radius: 10px; cursor: pointer; }
+  .tbtn:disabled { opacity: .3; cursor: default; }
+  .tbtn.danger { color: var(--accent); }
+  .pbar .btn { padding: 13px; }
+  #sRanges { border: 1.5px solid var(--line) !important; border-radius: 12px; padding: 12px 14px !important; background: var(--bg) !important; }
+  #sRanges:focus { border-color: var(--accent) !important; }
+  .flist { margin-top: 14px; display: grid; gap: 6px; max-height: 260px; overflow: auto; }
+  .flist div { display: flex; justify-content: space-between; gap: 10px; background: var(--bg); border-radius: 10px; padding: 9px 12px; font-size: 14px; }
+  .flist span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .flist small { color: var(--muted); white-space: nowrap; }
+  .flist div { align-items: center; }
+  .flist .fmeta { flex: 1; min-width: 0; display: grid; }
+  .flist button { border: 0; background: var(--accent-soft); color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; border-radius: 8px; padding: 7px 10px; cursor: pointer; flex: none; }
+  .flist button.done { background: var(--ok-soft); color: var(--ok); }
+  .seg { display: flex; background: var(--sunk); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 3px; }
+  .seg button { flex: 1; border: 0; background: none; color: var(--ink); font: inherit; font-size: 15px; padding: 9px 4px; border-radius: 9px; cursor: pointer; }
+  .seg button.on { background: var(--card); font-weight: 650; box-shadow: 0 1px 2px rgba(0,0,0,.12), inset 0 -2px 0 var(--accent); }
+  .phgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (min-width: 520px) { .phgrid { grid-template-columns: repeat(4, 1fr); } }
+  .ph { position: relative; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .ph .thumb { aspect-ratio: 1 / 1.3; border-radius: 10px; background: var(--card); border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; box-shadow: var(--shadow); }
+  .ph .thumb img { max-width: 90%; max-height: 90%; display: block; transition: transform .2s; }
+  .ph .thumb .ph-load { width: 50%; height: 40%; background: var(--line); border-radius: 4px; }
+  .ph .tools { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+  .ph .tools b { font-size: 13px; font-weight: 600; padding-left: 4px; }
+  .ph .tools span { display: flex; gap: 2px; }
+  .ph .tools button { width: 32px; height: 32px; border: 0; background: none; color: var(--muted); border-radius: 8px; display: grid; place-items: center; cursor: pointer; }
+  .ph .bad { color: var(--accent); font-size: 12px; text-align: center; padding: 6px; }
+  .tile small { line-height: 1.25; display: block; }
+  .xset { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+  .xlabel { font-size: 13px; color: var(--muted); margin: 12px 2px 6px; }
+  .xinput { width: 100%; border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--bg); color: var(--ink); font: inherit; font-size: 17px; outline: none; }
+  .xinput:focus { border-color: var(--accent); }
+  .pwwrap { position: relative; }
+  .pwwrap .xinput { padding-right: 80px; }
+  .pwwrap .link { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chips button { border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 13px; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+  .seg button { font-size: 14px; }
+  /* ===== Dunkel & edel: Glas, Licht, Tiefe ===== */
+  html { background: var(--bg); }
+  body { background:
+      radial-gradient(120% 60% at 85% -10%, rgba(91,147,255,.16), transparent 60%),
+      radial-gradient(90% 50% at -10% 20%, rgba(240,98,173,.10), transparent 60%),
+      radial-gradient(80% 50% at 50% 110%, rgba(52,201,154,.08), transparent 60%),
+      var(--bg);
+    background-attachment: fixed; min-height: 100vh; }
+  section:not(#home) { --glow: color-mix(in srgb, var(--accent) 35%, transparent); }
+  .card, .binder, .levels, .mitem, .seg, .xinput, .compare div, .flist div, .pg .thumb, .ph .thumb {
+    -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%); }
+  .card, .binder, .levels { background: linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.03)); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .level { background: transparent; }
+  .levels .level:has(input:checked) { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 18%, transparent), transparent 85%); box-shadow: inset 3px 0 0 var(--accent); }
+  .level input { border-color: rgba(255,255,255,.25); }
+  .level input:checked { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); }
+  .tag { background: transparent; }
+
+  /* Startseite */
+  .hero { padding-top: 28px; }
+  .brand { background: linear-gradient(180deg, #ffffff 30%, #aab3c2); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { color: var(--muted); }
+  .fan { background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04)); border-color: var(--hi); right: 58px;
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+  .fan::before { background: repeating-linear-gradient(rgba(255,255,255,.18) 0 3px, transparent 3px 9px); }
+  .fan i { box-shadow: 0 0 10px var(--c); }
+  .infobtn { position: absolute; right: 2px; top: 22px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line);
+    background: rgba(255,255,255,.06); color: var(--muted); display: grid; place-items: center; cursor: pointer;
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  .infobtn:active { background: rgba(255,255,255,.12); }
+  .binder { padding: 6px; }
+  .tool { min-height: 66px; border-radius: 13px; align-items: center; padding: 0 2px 0 8px; }
+  .tool + .tool { margin-top: 2px; }
+  .tool + .tool .tx, .tool + .tool .chev { border-top: 0; }
+  .tool .tab { width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(145deg, color-mix(in srgb, var(--c) 100%, #fff 12%), color-mix(in srgb, var(--c) 80%, #000 20%));
+    box-shadow: 0 0 0 1px rgba(255,255,255,.14) inset, 0 6px 18px color-mix(in srgb, var(--c) 45%, transparent); }
+  .tool + .tool .tab { box-shadow: 0 0 0 1px rgba(255,255,255,.14) inset, 0 6px 18px color-mix(in srgb, var(--c) 45%, transparent); }
+  .tool .tx { padding: 10px 6px 10px 14px; }
+  .tool .chev { align-self: center; padding: 0 10px 0 4px; }
+  .tool:active { background: rgba(255,255,255,.06); }
+  .tool:active .tx, .tool:active .chev { background: none; }
+
+  /* Werkzeug-Ansichten */
+  section:not(#home) header h1::before { box-shadow: 0 0 14px var(--glow); }
+  .back { color: color-mix(in srgb, var(--accent) 80%, #fff); }
+  .pick { background: radial-gradient(120% 120% at 50% 0%, color-mix(in srgb, var(--accent) 14%, transparent), rgba(255,255,255,.03) 70%);
+    border: 1px dashed color-mix(in srgb, var(--accent) 55%, transparent); }
+  .pick .ico { background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 100%, #fff 15%), color-mix(in srgb, var(--accent) 80%, #000 20%));
+    box-shadow: 0 8px 24px var(--glow), 0 0 0 1px rgba(255,255,255,.15) inset; }
+  .file .ico { background: color-mix(in srgb, var(--accent) 18%, transparent); color: color-mix(in srgb, var(--accent) 75%, #fff); }
+  .link, .addmore { color: color-mix(in srgb, var(--accent) 75%, #fff); }
+  .btn { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 100%, #fff 10%), color-mix(in srgb, var(--accent) 85%, #000 15%));
+    box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset, 0 10px 28px var(--glow, rgba(0,0,0,.3)); }
+  .btn.ghost { background: rgba(255,255,255,.04); border: 1px solid var(--line); box-shadow: none; color: var(--ink); }
+  .btn:disabled { box-shadow: none; }
+  .seg { background: rgba(0,0,0,.25); border-color: var(--line); }
+  .seg button { color: var(--muted); }
+  .seg button.on { background: rgba(255,255,255,.1); color: var(--ink); box-shadow: 0 0 0 1px rgba(255,255,255,.1) inset, inset 0 -2px 0 var(--accent); }
+  .switch input { background: rgba(255,255,255,.14); }
+  .switch input:checked { background: var(--ok); box-shadow: 0 0 14px rgba(79,209,139,.45); }
+  .progress { background: rgba(255,255,255,.08); }
+  .progress > div { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 80%, #fff), var(--accent)); box-shadow: 0 0 12px var(--glow, transparent); }
+  .saving { text-shadow: 0 0 24px rgba(79,209,139,.35); }
+  .compare div, .flist div { background: rgba(0,0,0,.22); border: 1px solid var(--line); }
+  .xinput { background: rgba(0,0,0,.25); }
+  .mitem { background: rgba(255,255,255,.05); }
+  .mitem .num { color: color-mix(in srgb, var(--accent) 75%, #fff); }
+  .pg .thumb, .ph .thumb { background: rgba(255,255,255,.05); }
+  .pg.sel .thumb { box-shadow: 0 0 18px var(--glow); }
+  .pbar { background: rgba(16,19,26,.94); border-top-color: var(--line); }
+  .tbtn.danger { color: var(--err); }
+  .msg.info { background: rgba(255,255,255,.05); }
+  .chips button { background: rgba(255,255,255,.05); }
+  .tile, .tag { color: color-mix(in srgb, var(--accent) 75%, #fff); border-color: color-mix(in srgb, var(--accent) 60%, transparent); }
+
+  /* Info-Fenster */
+  .sheet-bg { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .sheet { width: 100%; max-width: 560px; background: linear-gradient(180deg, #1c212b, #141820); border: 1px solid var(--line); border-bottom: 0;
+    border-radius: 22px 22px 0 0; padding: 10px 20px calc(env(safe-area-inset-bottom) + 20px); box-shadow: 0 -20px 60px rgba(0,0,0,.5); }
+  .sheet .grip { width: 38px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.2); margin: 0 auto 14px; }
+  .sheet h3 { font-family: var(--display); font-stretch: 112%; font-size: 22px; margin: 0 0 10px; }
+  .sheet p { color: var(--ink); margin: 0 0 12px; font-size: 15px; line-height: 1.5; }
+  .sheet .fine { color: var(--muted); font-size: 13px; }
+  .sheet a { color: var(--muted); }
+  .sheet .btn { margin-top: 8px; }
+  @media (prefers-reduced-motion: no-preference) { .sheet-bg:not(.hidden) .sheet { animation: sheetIn .28s cubic-bezier(.2,.8,.2,1); } }
+  @keyframes sheetIn { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Startseite -->
+  <section id="home">
+    <header class="hero">
+      <div class="fan" aria-hidden="true"><i style="--c: var(--t-compress)"></i><i style="--c: var(--t-merge)"></i><i style="--c: var(--t-pages)"></i><i style="--c: var(--t-split)"></i><i style="--c: var(--t-photos)"></i><i style="--c: var(--t-convert)"></i><i style="--c: var(--t-extras)"></i></div>
+      <button class="infobtn" id="infoBtn" aria-label="Info zur App">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
+      </button>
+      <h1 class="brand">PDF<br>Werkstatt</h1>
+      <p class="lead">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        Alles läuft auf deinem iPhone. Nichts wird hochgeladen.
+      </p>
+    </header>
+
+    <h2>Bearbeiten</h2>
+    <div class="binder">
+      <button class="tool" id="openCompress" style="--c: var(--t-compress)">
+        <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></span>
+        <span class="tx"><b>Komprimieren</b><small>Datei verkleinern, Text bleibt scharf</small></span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="tool" id="openMerge" style="--c: var(--t-merge)">
+        <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><path d="M11 8h4v3"/></svg></span>
+        <span class="tx"><b>Zusammenfügen</b><small>Mehrere PDFs zu einer</small></span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="tool" id="openPages" style="--c: var(--t-pages)">
+        <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+        <span class="tx"><b>Seiten</b><small>Drehen, löschen, neu sortieren</small></span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="tool" id="openSplit" style="--c: var(--t-split)">
+        <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M3 12h18" stroke-dasharray="2 2"/></svg></span>
+        <span class="tx"><b>Aufteilen</b><small>Seiten herausziehen oder teilen</small></span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <h2>Erstellen und umwandeln</h2>
+    <div class="binder">
+      <button class="tool" id="openPhotos" style="--c: var(--t-photos)">
+        <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 8"/></svg></span>
+        <span class="tx"><b>Fotos → PDF</b><small>Bilder und Belege als PDF</small></span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="tool" id="openConvert" style="--c: var(--t-convert)">
+        <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg></span>
+        <span class="tx"><b>Umwandeln</b><small>In Bilder, Text oder Word</small></span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <h2>Zusätze</h2>
+    <div class="binder">
+      <button class="tool" id="openExtras" style="--c: var(--t-extras)">
+        <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg></span>
+        <span class="tx"><b>Extras</b><small>Seitenzahlen, Wasserzeichen, Passwort</small></span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- Komprimieren -->
+  <section id="compress" class="hidden">
+    <button class="back" id="backHome">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Werkzeuge
+    </button>
+    <header style="padding-top:0">
+      <h1>Komprimieren</h1>
+      <div class="sub">Bilder werden verkleinert, Text bleibt scharf und durchsuchbar.</div>
+    </header>
+
+    <label class="pick" id="pick" for="fileInput">
+      <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M20 16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3"/></svg></span>
+      <b>PDF auswählen</b>
+      <small>aus Dateien, iCloud oder Downloads</small>
+    </label>
+    <input type="file" id="fileInput" accept="application/pdf,.pdf">
+
+    <div class="card file hidden" id="fileCard">
+      <span class="ico">PDF</span>
+      <div class="meta"><div class="name" id="fileName"></div><div class="size" id="fileSize"></div></div>
+      <button class="link" id="changeFile">Ändern</button>
+    </div>
+
+    <div id="options" class="hidden">
+      <h2>Stufe</h2>
+      <div class="levels">
+        <label class="level"><input type="radio" name="lvl" value="screen">
+          <span class="t"><b>Bildschirm</b><small>72 dpi, am kleinsten, zum Anschauen am Handy</small></span></label>
+        <label class="level"><input type="radio" name="lvl" value="email" checked>
+          <span class="t"><b>E-Mail</b><small>150 dpi, klein und gut lesbar</small></span><span class="tag">Empfohlen</span></label>
+        <label class="level"><input type="radio" name="lvl" value="print">
+          <span class="t"><b>Druck</b><small>300 dpi, hohe Qualität, moderat kleiner</small></span></label>
+        <label class="level"><input type="radio" name="lvl" value="custom">
+          <span class="t"><b>Eigene Einstellung</b><small>Auflösung und Bildqualität selbst wählen</small></span></label>
+      </div>
+
+      <div class="card custom hidden" id="customBox" style="margin-top:8px">
+        <div class="slider">
+          <label for="dpi">Auflösung der Bilder <span id="dpiVal">150 dpi</span></label>
+          <input type="range" id="dpi" min="50" max="300" step="10" value="150">
+        </div>
+        <div class="slider">
+          <label for="quality">Bildqualität <span id="qVal">70 %</span></label>
+          <input type="range" id="quality" min="10" max="100" step="5" value="70">
+        </div>
+      </div>
+
+      <h2>Extras</h2>
+      <div class="card row">
+        <span class="t"><b>In Graustufen umwandeln</b><small>spart zusätzlich Platz, Farben gehen verloren</small></span>
+        <span class="switch"><input type="checkbox" id="gray" aria-label="Graustufen"></span>
+      </div>
+
+      <div style="margin-top:18px">
+        <button class="btn" id="runBtn">Komprimieren</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="work" style="margin-top:14px">
+      <div class="status" id="workStatus">Wird vorbereitet …</div>
+      <div class="hint" id="workHint"></div>
+      <div class="progress indet" id="bar"><div></div></div>
+    </div>
+
+    <div class="card hidden" id="result" style="margin-top:14px">
+      <div class="result-top">
+        <span class="saving" id="saving"></span>
+        <span class="hint" id="pagesInfo"></span>
+      </div>
+      <div class="compare">
+        <div><small>Vorher</small><b id="before"></b></div>
+        <span class="arrow">→</span>
+        <div><small>Nachher</small><b id="after"></b></div>
+      </div>
+      <div class="msg info hidden" id="resultNote"></div>
+      <div class="stack" style="margin-top:16px">
+        <button class="btn" id="saveBtn">Speichern / Teilen</button>
+        <button class="btn ghost" id="againBtn">Andere Stufe probieren</button>
+        <button class="btn ghost" id="newBtn">Neue Datei</button>
+      </div>
+      <div class="msg hidden" id="saveMsg"></div>
+    </div>
+
+    <div class="msg err hidden" id="errorBox"></div>
+  </section>
+
+  <!-- Zusammenfügen -->
+  <section id="merge" class="hidden">
+    <button class="back" data-home>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Werkzeuge
+    </button>
+    <header style="padding-top:0">
+      <h1>Zusammenfügen</h1>
+      <div class="sub">Mehrere PDFs zu einer Datei. Reihenfolge mit dem Griff ⠿ ziehen.</div>
+    </header>
+
+    <label class="pick" id="mPick" for="mInput">
+      <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+      <b>PDFs auswählen</b>
+      <small>mehrere auf einmal möglich</small>
+    </label>
+    <input type="file" id="mInput" accept="application/pdf,.pdf" multiple>
+
+    <div id="mBody" class="hidden">
+      <div class="mlist" id="mList"></div>
+      <label class="addmore" for="mInput">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Weitere PDFs hinzufügen
+      </label>
+      <div class="hint" id="mTotals" style="margin:10px 6px 0"></div>
+
+      <h2>Dateiname</h2>
+      <div class="card namefield">
+        <input type="text" id="mName" value="Zusammengefuegt" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Dateiname">
+        <span>.pdf</span>
+      </div>
+
+      <div style="margin-top:18px">
+        <button class="btn" id="mRun" disabled>Zusammenfügen</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="mWork" style="margin-top:14px">
+      <div class="status" id="mStatus">Füge zusammen …</div>
+      <div class="progress" id="mBar"><div></div></div>
+    </div>
+
+    <div class="card hidden" id="mResult" style="margin-top:14px">
+      <div class="result-top">
+        <span class="saving" style="font-size:28px">Fertig</span>
+        <span class="hint" id="mInfo"></span>
+      </div>
+      <div class="stack" style="margin-top:16px">
+        <button class="btn" id="mSave">Speichern / Teilen</button>
+        <button class="btn ghost" id="mCompress">Jetzt auch komprimieren</button>
+        <button class="btn ghost" id="mEdit">Liste bearbeiten</button>
+        <button class="btn ghost" id="mReset">Neu starten</button>
+      </div>
+      <div class="msg hidden" id="mSaveMsg"></div>
+    </div>
+
+    <div class="msg err hidden" id="mError"></div>
+  </section>
+
+  <!-- Seiten verwalten -->
+  <section id="pages" class="hidden">
+    <button class="back" data-home>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Werkzeuge
+    </button>
+    <header style="padding-top:0">
+      <h1>Seiten</h1>
+      <div class="sub">Seiten antippen zum Auswählen. Zum Verschieben eine Seite kurz gedrückt halten und ziehen.</div>
+    </header>
+
+    <label class="pick" id="pPick" for="pInput">
+      <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M20 16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3"/></svg></span>
+      <b>PDF auswählen</b>
+      <small>aus Dateien, iCloud oder Downloads</small>
+    </label>
+    <input type="file" id="pInput" accept="application/pdf,.pdf">
+
+    <div id="pBody" class="hidden">
+      <div class="card file">
+        <span class="ico">PDF</span>
+        <div class="meta"><div class="name" id="pName"></div><div class="size" id="pCount"></div></div>
+        <button class="link" id="pChange">Ändern</button>
+      </div>
+      <div class="hint" id="pLoading" style="margin:12px 6px 0">Vorschau wird erstellt …</div>
+      <div class="pgrid" id="pGrid"></div>
+      <div style="height:150px"></div>
+    </div>
+
+    <div class="pbar hidden" id="pBar">
+      <div class="pbar-in">
+        <div class="pbar-sel" id="pSelInfo">Keine Seite ausgewählt</div>
+        <div class="pbar-btns">
+          <button class="tbtn" id="pSelAll"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12l3 3 5-6"/></svg><span id="pSelAllTxt">Alle</span></button>
+          <button class="tbtn" id="pRotL" disabled><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4v6h6"/><path d="M3.5 15a9 9 0 1 0 2.1-9.4L3 10"/></svg><span>Links</span></button>
+          <button class="tbtn" id="pRotR" disabled><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4v6h-6"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L21 10"/></svg><span>Rechts</span></button>
+          <button class="tbtn danger" id="pDel" disabled><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span>Löschen</span></button>
+          <button class="tbtn" id="pUndo" disabled><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg><span>Zurück</span></button>
+        </div>
+        <button class="btn" id="pSave">Fertig – PDF erstellen</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="pResult" style="margin-top:14px">
+      <div class="result-top">
+        <span class="saving" style="font-size:28px">Fertig</span>
+        <span class="hint" id="pInfo"></span>
+      </div>
+      <div class="stack" style="margin-top:16px">
+        <button class="btn" id="pDownload">Speichern / Teilen</button>
+        <button class="btn ghost" id="pCompress">Jetzt auch komprimieren</button>
+        <button class="btn ghost" id="pBack">Weiter bearbeiten</button>
+        <button class="btn ghost" id="pNew">Neue Datei</button>
+      </div>
+      <div class="msg hidden" id="pSaveMsg"></div>
+    </div>
+
+    <div class="msg err hidden" id="pError"></div>
+  </section>
+
+  <!-- Aufteilen -->
+  <section id="split" class="hidden">
+    <button class="back" data-home>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Werkzeuge
+    </button>
+    <header style="padding-top:0">
+      <h1>Aufteilen</h1>
+      <div class="sub">Bestimmte Seiten herausziehen oder eine PDF in mehrere Dateien teilen.</div>
+    </header>
+
+    <label class="pick" id="sPick" for="sInput">
+      <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M20 16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3"/></svg></span>
+      <b>PDF auswählen</b>
+      <small>aus Dateien, iCloud oder Downloads</small>
+    </label>
+    <input type="file" id="sInput" accept="application/pdf,.pdf">
+
+    <div id="sBody" class="hidden">
+      <div class="card file">
+        <span class="ico">PDF</span>
+        <div class="meta"><div class="name" id="sName"></div><div class="size" id="sCount"></div></div>
+        <button class="link" id="sChange">Ändern</button>
+      </div>
+
+      <h2>Wie aufteilen?</h2>
+      <div class="levels">
+        <label class="level"><input type="radio" name="smode" value="ranges" checked>
+          <span class="t"><b>Seiten auswählen</b><small>z. B. 1-3, 7 oder 10- (bis zum Ende)</small></span></label>
+        <label class="level"><input type="radio" name="smode" value="every">
+          <span class="t"><b>Alle paar Seiten teilen</b><small>z. B. immer 2 Seiten pro Datei</small></span></label>
+        <label class="level"><input type="radio" name="smode" value="single">
+          <span class="t"><b>Jede Seite einzeln</b><small>eine Datei pro Seite</small></span></label>
+      </div>
+
+      <div class="card custom" id="sRangesBox" style="margin-top:8px">
+        <div class="namefield" style="padding:0;border:0">
+          <input type="text" id="sRanges" placeholder="Seiten, z. B. 1-3, 7" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Seitenbereiche">
+        </div>
+        <div class="row">
+          <span class="t"><b>Jeder Bereich als eigene Datei</b><small>aus: alles in einer PDF</small></span>
+          <span class="switch"><input type="checkbox" id="sSeparate" aria-label="Jeder Bereich eigene Datei"></span>
+        </div>
+      </div>
+
+      <div class="card custom hidden" id="sEveryBox" style="margin-top:8px">
+        <div class="slider">
+          <label for="sEvery">Seiten pro Datei <span id="sEveryVal">2</span></label>
+          <input type="range" id="sEvery" min="1" max="20" step="1" value="2">
+        </div>
+      </div>
+
+      <div class="msg info" id="sPreview"></div>
+
+      <div style="margin-top:18px">
+        <button class="btn" id="sRun" disabled>Aufteilen</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="sWork" style="margin-top:14px">
+      <div class="status" id="sStatus">Teile auf …</div>
+      <div class="progress" id="sBar"><div></div></div>
+    </div>
+
+    <div class="card hidden" id="sResult" style="margin-top:14px">
+      <div class="result-top">
+        <span class="saving" style="font-size:28px">Fertig</span>
+        <span class="hint" id="sInfo"></span>
+      </div>
+      <div class="flist" id="sFiles"></div>
+      <div class="hint hidden" id="sZipHint" style="margin-top:10px">Tippe bei einer Datei auf „Sichern“ oder unten auf „Alle sichern“.</div>
+      <div class="stack" style="margin-top:16px">
+        <button class="btn" id="sSave">Speichern / Teilen</button>
+        <button class="btn ghost hidden" id="sZip">Als ZIP speichern</button>
+        <button class="btn ghost hidden" id="sCompress">Jetzt auch komprimieren</button>
+        <button class="btn ghost" id="sBack">Andere Aufteilung</button>
+        <button class="btn ghost" id="sNew">Neue Datei</button>
+      </div>
+      <div class="msg hidden" id="sSaveMsg"></div>
+    </div>
+
+    <div class="msg err hidden" id="sError"></div>
+  </section>
+
+  <!-- Fotos -> PDF -->
+  <section id="photos" class="hidden">
+    <button class="back" data-home>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Werkzeuge
+    </button>
+    <header style="padding-top:0">
+      <h1>Fotos → PDF</h1>
+      <div class="sub">Fotos, Screenshots oder abfotografierte Dokumente zu einer PDF. Reihenfolge per Gedrückthalten ändern.</div>
+    </header>
+
+    <label class="pick" id="phPick" for="phInput">
+      <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 8"/></svg></span>
+      <b>Fotos auswählen</b>
+      <small>aus der Fotomediathek, Kamera oder Dateien</small>
+    </label>
+    <input type="file" id="phInput" accept="image/*" multiple>
+
+    <div id="phBody" class="hidden">
+      <div class="phgrid" id="phGrid"></div>
+      <label class="addmore" for="phInput">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Weitere Fotos hinzufügen
+      </label>
+      <div class="hint" id="phTotals" style="margin:10px 6px 0"></div>
+
+      <h2>Seitengröße</h2>
+      <div class="seg" id="phSize">
+        <button data-v="a4" class="on">A4</button><button data-v="fit">Wie Foto</button>
+      </div>
+
+      <h2>Ausrichtung</h2>
+      <div class="seg" id="phOrient">
+        <button data-v="auto" class="on">Automatisch</button><button data-v="portrait">Hoch</button><button data-v="landscape">Quer</button>
+      </div>
+
+      <h2>Rand</h2>
+      <div class="seg" id="phMargin">
+        <button data-v="0">Ohne</button><button data-v="18" class="on">Schmal</button><button data-v="40">Normal</button>
+      </div>
+
+      <h2>Qualität</h2>
+      <div class="seg" id="phQual">
+        <button data-v="high">Hoch</button><button data-v="mid" class="on">Mittel</button><button data-v="low">Klein</button>
+      </div>
+      <div class="hint" id="phQualHint" style="margin:6px 6px 0"></div>
+
+      <h2>Extras</h2>
+      <div class="card row">
+        <span class="t"><b>Dokument-Look</b><small>Schwarzweiß mit mehr Kontrast, gut für Belege und Briefe</small></span>
+        <span class="switch"><input type="checkbox" id="phDoc" aria-label="Dokument-Look"></span>
+      </div>
+
+      <h2>Dateiname</h2>
+      <div class="card namefield">
+        <input type="text" id="phName" value="Fotos" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Dateiname">
+        <span>.pdf</span>
+      </div>
+
+      <div style="margin-top:18px">
+        <button class="btn" id="phRun" disabled>PDF erstellen</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="phWork" style="margin-top:14px">
+      <div class="status" id="phStatus">Erstelle PDF …</div>
+      <div class="progress" id="phBar"><div></div></div>
+    </div>
+
+    <div class="card hidden" id="phResult" style="margin-top:14px">
+      <div class="result-top">
+        <span class="saving" style="font-size:28px">Fertig</span>
+        <span class="hint" id="phInfo"></span>
+      </div>
+      <div class="stack" style="margin-top:16px">
+        <button class="btn" id="phSave">Speichern / Teilen</button>
+        <button class="btn ghost" id="phCompress">Jetzt auch komprimieren</button>
+        <button class="btn ghost" id="phEdit">Weiter bearbeiten</button>
+        <button class="btn ghost" id="phReset">Neu starten</button>
+      </div>
+      <div class="msg hidden" id="phSaveMsg"></div>
+    </div>
+
+    <div class="msg err hidden" id="phError"></div>
+  </section>
+
+  <!-- Extras -->
+  <section id="extras" class="hidden">
+    <button class="back" data-home>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Werkzeuge
+    </button>
+    <header style="padding-top:0">
+      <h1>Extras</h1>
+      <div class="sub">Schalte nur ein, was du brauchst. Alles ist optional und frei kombinierbar.</div>
+    </header>
+
+    <label class="pick" id="xPick" for="xInput">
+      <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M20 16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3"/></svg></span>
+      <b>PDF auswählen</b>
+      <small>aus Dateien, iCloud oder Downloads</small>
+    </label>
+    <input type="file" id="xInput" accept="application/pdf,.pdf">
+
+    <div id="xBody" class="hidden">
+      <div class="card file">
+        <span class="ico">PDF</span>
+        <div class="meta"><div class="name" id="xName"></div><div class="size" id="xCount"></div></div>
+        <button class="link" id="xChange">Ändern</button>
+      </div>
+
+      <!-- Seitenzahlen -->
+      <div class="card xopt" style="margin-top:14px">
+        <div class="row">
+          <span class="t"><b>Seitenzahlen</b><small>auf jede Seite drucken</small></span>
+          <span class="switch"><input type="checkbox" id="xNumOn" aria-label="Seitenzahlen"></span>
+        </div>
+        <div class="xset hidden" id="xNumSet">
+          <div class="xlabel">Format</div>
+          <div class="seg" id="xNumFmt"><button data-v="n" class="on">1</button><button data-v="n/t">1 / 5</button><button data-v="page">Seite 1 von 5</button></div>
+          <div class="xlabel">Position</div>
+          <div class="seg" id="xNumPos"><button data-v="bl">Unten links</button><button data-v="bc" class="on">Unten Mitte</button><button data-v="br">Unten rechts</button></div>
+          <div class="row" style="margin-top:12px">
+            <span class="t"><b style="font-weight:500">Erste Seite auslassen</b><small>z. B. für ein Deckblatt</small></span>
+            <span class="switch"><input type="checkbox" id="xNumSkip" aria-label="Erste Seite auslassen"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wasserzeichen -->
+      <div class="card xopt" style="margin-top:10px">
+        <div class="row">
+          <span class="t"><b>Wasserzeichen</b><small>Text quer über jede Seite</small></span>
+          <span class="switch"><input type="checkbox" id="xWmOn" aria-label="Wasserzeichen"></span>
+        </div>
+        <div class="xset hidden" id="xWmSet">
+          <div class="xlabel">Text</div>
+          <input type="text" class="xinput" id="xWmText" value="KOPIE" maxlength="40" autocomplete="off" spellcheck="false" aria-label="Wasserzeichen-Text">
+          <div class="chips" id="xWmChips"><button>KOPIE</button><button>ENTWURF</button><button>VERTRAULICH</button><button>MUSTER</button></div>
+          <div class="xlabel">Richtung</div>
+          <div class="seg" id="xWmDir"><button data-v="diag" class="on">Schräg</button><button data-v="flat">Waagerecht</button></div>
+          <div class="xlabel">Farbe</div>
+          <div class="seg" id="xWmColor"><button data-v="gray" class="on">Grau</button><button data-v="red">Rot</button><button data-v="blue">Blau</button></div>
+          <div class="slider" style="margin-top:12px">
+            <label for="xWmOpacity">Deckkraft <span id="xWmOpVal">20 %</span></label>
+            <input type="range" id="xWmOpacity" min="5" max="60" step="5" value="20">
+          </div>
+        </div>
+      </div>
+
+      <!-- Passwort -->
+      <div class="card xopt" style="margin-top:10px">
+        <div class="row">
+          <span class="t"><b>Passwortschutz</b><small>PDF lässt sich nur mit Passwort öffnen</small></span>
+          <span class="switch"><input type="checkbox" id="xPwOn" aria-label="Passwortschutz"></span>
+        </div>
+        <div class="xset hidden" id="xPwSet">
+          <div class="xlabel">Passwort</div>
+          <div class="pwwrap">
+            <input type="password" class="xinput" id="xPw" autocomplete="new-password" autocapitalize="off" spellcheck="false" aria-label="Passwort">
+            <button class="link" id="xPwShow" type="button">Zeigen</button>
+          </div>
+          <div class="xlabel">Passwort wiederholen</div>
+          <input type="password" class="xinput" id="xPw2" autocomplete="new-password" autocapitalize="off" spellcheck="false" aria-label="Passwort wiederholen">
+          <div class="msg info" style="margin-top:12px;font-size:14px">
+            Merk dir das Passwort gut – es lässt sich nicht wiederherstellen.<br>
+            Nur Buchstaben ohne Umlaute, Ziffern und Zeichen wie ! ? - _ verwenden, damit es überall funktioniert.<br>
+            Schutz-Stufe: Standard (RC4 128 Bit). Gut gegen neugierige Blicke, nicht für hochvertrauliche Unterlagen.
+          </div>
+        </div>
+      </div>
+
+      <div class="msg err hidden" id="xCheck"></div>
+
+      <div style="margin-top:18px">
+        <button class="btn" id="xRun" disabled>Anwenden</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="xWork" style="margin-top:14px">
+      <div class="status" id="xStatus">Wird bearbeitet …</div>
+      <div class="hint" id="xHint"></div>
+      <div class="progress indet" id="xBar"><div></div></div>
+    </div>
+
+    <div class="card hidden" id="xResult" style="margin-top:14px">
+      <div class="result-top">
+        <span class="saving" style="font-size:28px">Fertig</span>
+        <span class="hint" id="xInfo"></span>
+      </div>
+      <div class="hint" id="xDone" style="margin-top:8px"></div>
+      <div class="stack" style="margin-top:16px">
+        <button class="btn" id="xSave">Speichern / Teilen</button>
+        <button class="btn ghost" id="xAgain">Einstellungen ändern</button>
+        <button class="btn ghost" id="xNew">Neue Datei</button>
+      </div>
+      <div class="msg hidden" id="xSaveMsg"></div>
+    </div>
+
+    <div class="msg err hidden" id="xError"></div>
+  </section>
+
+  <!-- Umwandeln -->
+  <section id="convert" class="hidden">
+    <button class="back" data-home>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Werkzeuge
+    </button>
+    <header style="padding-top:0">
+      <h1>Umwandeln</h1>
+      <div class="sub">PDF in Bilder, Text oder ein Word-Dokument umwandeln.</div>
+    </header>
+
+    <label class="pick" id="cPick" for="cInput">
+      <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M20 16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3"/></svg></span>
+      <b>PDF auswählen</b>
+      <small>aus Dateien, iCloud oder Downloads</small>
+    </label>
+    <input type="file" id="cInput" accept="application/pdf,.pdf">
+
+    <div id="cBody" class="hidden">
+      <div class="card file">
+        <span class="ico">PDF</span>
+        <div class="meta"><div class="name" id="cName"></div><div class="size" id="cCount"></div></div>
+        <button class="link" id="cChange">Ändern</button>
+      </div>
+
+      <h2>Umwandeln in</h2>
+      <div class="seg" id="cTarget">
+        <button data-v="img" class="on">Bilder</button><button data-v="txt">Text</button><button data-v="docx">Word</button>
+      </div>
+
+      <div class="card" id="cImgSet" style="margin-top:10px">
+        <div class="xlabel" style="margin-top:0">Bildformat</div>
+        <div class="seg" id="cFmt"><button data-v="jpg" class="on">JPG</button><button data-v="png">PNG</button></div>
+        <div class="hint" style="margin:6px 2px 0">JPG: kleinere Dateien, ideal für Fotos und zum Teilen. PNG: verlustfrei, gut für Text und Grafiken.</div>
+        <div class="xlabel">Auflösung</div>
+        <div class="seg" id="cDpi"><button data-v="72">Niedrig</button><button data-v="150" class="on">Mittel</button><button data-v="300">Hoch</button></div>
+        <div class="hint" id="cDpiHint" style="margin:6px 2px 0"></div>
+      </div>
+
+      <div class="card" id="cTxtSet" style="margin-top:10px">
+        <div class="row">
+          <span class="t"><b>Seitenwechsel markieren</b><small id="cBreakHint">„— Seite 2 —“ zwischen den Seiten</small></span>
+          <span class="switch"><input type="checkbox" id="cBreaks" checked aria-label="Seitenwechsel markieren"></span>
+        </div>
+        <div class="row" id="cHeadRow" style="margin-top:12px">
+          <span class="t"><b>Überschriften erkennen</b><small>große Schrift wird fett übernommen</small></span>
+          <span class="switch"><input type="checkbox" id="cHeads" checked aria-label="Überschriften erkennen"></span>
+        </div>
+      </div>
+
+      <h2>Seiten</h2>
+      <div class="seg" id="cPagesMode"><button data-v="all" class="on">Alle</button><button data-v="sel">Auswahl</button></div>
+      <input type="text" class="xinput hidden" id="cRanges" placeholder="z. B. 1-3, 7" autocomplete="off" autocapitalize="off" spellcheck="false" style="margin-top:8px" aria-label="Seiten">
+
+      <div class="msg info" id="cNote"></div>
+
+      <div style="margin-top:18px">
+        <button class="btn" id="cRun" disabled>Umwandeln</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="cWork" style="margin-top:14px">
+      <div class="status" id="cStatus">Wandle um …</div>
+      <div class="progress" id="cBar"><div></div></div>
+    </div>
+
+    <div class="card hidden" id="cResult" style="margin-top:14px">
+      <div class="result-top">
+        <span class="saving" style="font-size:28px">Fertig</span>
+        <span class="hint" id="cInfo"></span>
+      </div>
+      <div class="msg info hidden" id="cWarn"></div>
+      <textarea class="xinput hidden" id="cText" readonly style="margin-top:12px;height:180px;font-size:14px;line-height:1.45;resize:vertical"></textarea>
+      <div class="flist" id="cFiles"></div>
+      <div class="stack" style="margin-top:16px">
+        <button class="btn" id="cSave">Speichern / Teilen</button>
+        <button class="btn ghost hidden" id="cCopy">Text kopieren</button>
+        <button class="btn ghost" id="cBack">Andere Einstellung</button>
+        <button class="btn ghost" id="cNew">Neue Datei</button>
+      </div>
+      <div class="msg hidden" id="cSaveMsg"></div>
+    </div>
+
+    <div class="msg err hidden" id="cError"></div>
+  </section>
+
+  <div class="sheet-bg hidden" id="infoSheet" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+    <div class="sheet">
+      <div class="grip" aria-hidden="true"></div>
+      <h3 id="infoTitle">Über die PDF Werkstatt</h3>
+      <p>Alle Werkzeuge laufen direkt auf deinem Gerät. Deine Dateien werden nirgendwo hochgeladen oder gespeichert.</p>
+      <p class="fine">Verwendete Bausteine: Ghostscript (AGPL-3.0) für Komprimierung und Passwortschutz, pdf-lib (MIT), PDF.js (Apache-2.0), JSZip (MIT) und SortableJS (MIT).</p>
+      <p class="fine"><a href="https://ghostscript.com/" target="_blank" rel="noopener">ghostscript.com</a> · <a href="https://github.com/ArtifexSoftware/ghostpdl" target="_blank" rel="noopener">Quellcode von Ghostscript</a></p>
+      <button class="btn ghost" id="infoClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="vendor/Sortable.min.js"></script>
+<script src="vendor/jszip.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var PRESETS = {
+    screen: { dpi: 72,  q: 35, label: 'Bildschirm' },
+    email:  { dpi: 150, q: 70, label: 'E-Mail' },
+    print:  { dpi: 300, q: 88, label: 'Druck' }
+  };
+  var state = { file: null, bytes: null, result: null, busy: false, engineReady: false };
+  var worker = null;
+  var downloadsPromise = null;
+
+  function fmt(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(bytes < 10 * 1024 * 1024 ? 2 : 1).replace('.', ',') + ' MB';
+  }
+  function show(el, on) { el.classList.toggle('hidden', !on); }
+  function qualityToQFactor(q) { return 0.1 + ((100 - q) / 90) * 1.4; } // 100 % -> 0.1 (beste), 10 % -> 1.5
+
+  function getDownloads() {
+    if (!downloadsPromise) {
+      downloadsPromise = (window.claude && typeof window.claude.use === 'function')
+        ? window.claude.use('downloads').catch(function () { return null; })
+        : Promise.resolve(null);
+    }
+    return downloadsPromise;
+  }
+
+  // ---------- Navigation ----------
+  var currentView = 'home';
+  function go(view) {
+    currentView = view;
+    ['home', 'compress', 'merge', 'pages', 'split', 'photos', 'extras', 'convert'].forEach(function (v) { show($(v), v === view); });
+    if (typeof syncPagesBar === 'function') syncPagesBar();
+    window.scrollTo(0, 0);
+  }
+  $('openCompress').addEventListener('click', function () { go('compress'); });
+  $('openMerge').addEventListener('click', function () { go('merge'); });
+  $('openPages').addEventListener('click', function () { go('pages'); });
+  $('openSplit').addEventListener('click', function () { go('split'); });
+  $('openPhotos').addEventListener('click', function () { go('photos'); });
+  $('openExtras').addEventListener('click', function () { go('extras'); });
+  $('openConvert').addEventListener('click', function () { go('convert'); });
+  $('backHome').addEventListener('click', function () { if (!state.busy) go('home'); });
+  document.querySelectorAll('[data-home]').forEach(function (b) { b.addEventListener('click', function () { if (!merge.busy && !pg.busy && !sp.busy && !ph.busy && !xt.busy && !cv.busy) go('home'); }); });
+
+  // ---------- Datei wählen ----------
+  var fileInput = $('fileInput');
+  fileInput.addEventListener('change', function () { if (fileInput.files && fileInput.files[0]) setFile(fileInput.files[0]); fileInput.value = ''; });
+  $('changeFile').addEventListener('click', function () { if (!state.busy) fileInput.click(); });
+  $('newBtn').addEventListener('click', function () { resetAll(); fileInput.click(); });
+
+  var pick = $('pick');
+  ['dragenter', 'dragover'].forEach(function (t) { pick.addEventListener(t, function (e) { e.preventDefault(); pick.classList.add('drag'); }); });
+  ['dragleave', 'drop'].forEach(function (t) { pick.addEventListener(t, function (e) { e.preventDefault(); pick.classList.remove('drag'); }); });
+  pick.addEventListener('drop', function (e) { var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) setFile(f); });
+
+  function setFile(f) {
+    hideError();
+    if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { showError('Das ist keine PDF-Datei.'); return; }
+    state.file = f; state.bytes = null; state.result = null;
+    $('fileName').textContent = f.name;
+    $('fileSize').textContent = fmt(f.size);
+    show(pick, false); show($('fileCard'), true); show($('options'), true);
+    show($('result'), false); show($('work'), false);
+    ensureWorker().postMessage({ type: 'preload' }); // Engine schon mal laden
+  }
+
+  function resetAll() {
+    state.file = null; state.bytes = null; state.result = null;
+    show(pick, true); show($('fileCard'), false); show($('options'), false);
+    show($('result'), false); show($('work'), false); hideError();
+  }
+
+  // ---------- Optionen ----------
+  var radios = document.querySelectorAll('input[name=lvl]');
+  radios.forEach(function (r) { r.addEventListener('change', function () { show($('customBox'), currentLevel() === 'custom'); }); });
+  function currentLevel() { var c = document.querySelector('input[name=lvl]:checked'); return c ? c.value : 'email'; }
+  $('dpi').addEventListener('input', function () { $('dpiVal').textContent = this.value + ' dpi'; });
+  $('quality').addEventListener('input', function () { $('qVal').textContent = this.value + ' %'; });
+
+  function currentOptions() {
+    var lvl = currentLevel();
+    var p = lvl === 'custom' ? { dpi: +$('dpi').value, q: +$('quality').value, label: 'Eigene' } : PRESETS[lvl];
+    return { dpi: p.dpi, qf: qualityToQFactor(p.q), gray: $('gray').checked, label: p.label };
+  }
+
+  // ---------- Worker ----------
+  function ensureWorker() {
+    if (worker) return worker;
+    worker = new Worker('worker.js');
+    worker.onmessage = onWorkerMessage;
+    worker.onerror = function () { if (typeof extrasWorkerMsg === 'function' && xt.busy) extrasWorkerMsg({ type: 'error', message: 'Die Engine konnte nicht gestartet werden. Bitte Seite neu laden.' }); if (!state.busy) { worker = null; return; } finishBusy(); showError('Die Komprimier-Engine konnte nicht gestartet werden. Bitte Seite neu laden.'); worker = null; };
+    return worker;
+  }
+
+  function onWorkerMessage(ev) {
+    var m = ev.data || {};
+    if (m.job === 'extras') { if (typeof extrasWorkerMsg === 'function') extrasWorkerMsg(m); return; }
+    if (m.type === 'loading') {
+      if (state.busy) {
+        $('workStatus').textContent = 'Engine wird geladen … ' + m.pct + ' %';
+        $('workHint').textContent = 'Nur beim ersten Mal (ca. 16 MB), danach geht es schneller.';
+        setBar(m.pct);
+      }
+    } else if (m.type === 'ready') {
+      state.engineReady = true;
+      if (state.busy) { $('workStatus').textContent = 'Komprimiere …'; $('workHint').textContent = 'Bitte die Seite geöffnet lassen.'; setBar(null); }
+    } else if (m.type === 'progress') {
+      if (m.total > 0) {
+        $('workStatus').textContent = 'Komprimiere Seite ' + Math.max(1, m.page) + ' von ' + m.total + ' …';
+        setBar(Math.round((m.page / m.total) * 100));
+      }
+    } else if (m.type === 'done') {
+      onDone(m);
+    } else if (m.type === 'error') {
+      if (state.busy) { finishBusy(); showError(m.message); }
+    }
+  }
+
+  function setBar(pct) {
+    var bar = $('bar');
+    if (pct === null) { bar.classList.add('indet'); bar.firstElementChild.style.width = ''; }
+    else { bar.classList.remove('indet'); bar.firstElementChild.style.width = pct + '%'; }
+  }
+
+  // ---------- Komprimieren ----------
+  $('runBtn').addEventListener('click', run);
+  $('againBtn').addEventListener('click', function () {
+    show($('result'), false); show($('options'), true);
+    $('options').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  function run() {
+    if (!state.file || state.busy) return;
+    hideError();
+    state.busy = true;
+    state.opts = currentOptions();
+    $('runBtn').disabled = true;
+    show($('options'), false); show($('result'), false); show($('work'), true);
+    $('workStatus').textContent = state.engineReady ? 'Komprimiere …' : 'Engine wird geladen …';
+    $('workHint').textContent = state.engineReady ? 'Bitte die Seite geöffnet lassen.' : 'Nur beim ersten Mal (ca. 16 MB), danach geht es schneller.';
+    setBar(null);
+    var go = function (buf) {
+      var copy = buf.slice(0); // Original behalten für weitere Durchläufe
+      ensureWorker().postMessage({ type: 'compress', data: copy, options: state.opts }, [copy]);
+    };
+    if (state.bytes) go(state.bytes);
+    else state.file.arrayBuffer().then(function (b) { state.bytes = b; go(b); })
+      .catch(function () { finishBusy(); showError('Die Datei konnte nicht gelesen werden.'); });
+  }
+
+  function finishBusy() {
+    state.busy = false; $('runBtn').disabled = false;
+    show($('work'), false); show($('options'), !!state.file);
+  }
+
+  function onDone(m) {
+    state.busy = false; $('runBtn').disabled = false;
+    show($('work'), false);
+    var before = state.file.size, after = m.data.byteLength;
+    state.result = { data: m.data, size: after };
+    var pct = Math.round((1 - after / before) * 100);
+    $('before').textContent = fmt(before);
+    $('after').textContent = fmt(after);
+    $('pagesInfo').textContent = (m.pages ? m.pages + (m.pages === 1 ? ' Seite' : ' Seiten') + ', ' : '') + state.opts.label;
+    var saving = $('saving'), note = $('resultNote');
+    if (pct >= 3) {
+      saving.className = 'saving'; saving.textContent = '−' + pct + ' %';
+      show(note, false);
+    } else {
+      saving.className = 'saving neutral'; saving.textContent = pct > 0 ? '−' + pct + ' %' : 'Kaum kleiner';
+      note.textContent = after >= before
+        ? 'Diese PDF ist schon gut komprimiert, die neue Datei wäre größer. Behalte am besten das Original. Meist bestehen solche PDFs nur aus Text.'
+        : 'Hier ist nicht viel zu holen, die PDF enthält vermutlich kaum Bilder. Probier ggf. die Stufe „Bildschirm“.';
+      show(note, true);
+    }
+    show($('saveMsg'), false);
+    $('saveBtn').disabled = after >= before;
+    show($('result'), true);
+    $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ---------- Speichern ----------
+  var MIME = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', txt: 'text/plain',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', zip: 'application/zip' };
+  function toFile(name, data) {
+    var ext = (name.split('.').pop() || '').toLowerCase();
+    return new File([data], name, { type: MIME[ext] || 'application/octet-stream' });
+  }
+  function canShareFiles(files) {
+    try { return !!(navigator.canShare && navigator.share && navigator.canShare({ files: files })); } catch (e) { return false; }
+  }
+  function downloadFile(file) {
+    var url = URL.createObjectURL(file), a = document.createElement('a');
+    a.href = url; a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  }
+  // Ohne Claude: iOS-Teilen-Menü („In Dateien sichern“), sonst normaler Download
+  function shareOrDownload(files, setMsg) {
+    if (canShareFiles(files)) {
+      return navigator.share({ files: files }).then(function () {
+        setMsg('ok', files.length === 1 ? 'Gespeichert bzw. geteilt: ' + files[0].name : files.length + ' Dateien gespeichert bzw. geteilt.');
+        return 'saved';
+      }, function (e) {
+        if (e && e.name === 'AbortError') return 'declined';
+        files.forEach(downloadFile);
+        setMsg('ok', 'Als Download gespeichert (Ordner „Downloads“).');
+        return 'saved';
+      });
+    }
+    files.forEach(downloadFile);
+    setMsg('ok', 'Als Download gespeichert (Ordner „Downloads“).');
+    return Promise.resolve('saved');
+  }
+  function savePdf(name, data, msgEl) {
+    var setMsg = function (kind, text) { msgEl.className = 'msg ' + kind; msgEl.textContent = text; };
+    var payload = data instanceof Blob ? data : new Blob([data]);
+    return getDownloads().then(function (dl) {
+      if (!dl) return shareOrDownload([toFile(name, payload)], setMsg);
+      return dl.save({ filename: name, data: payload }).then(function () {
+        setMsg('ok', 'Gespeichert: ' + name);
+        return 'saved';
+      }, function (e) {
+        var c = e && e.code;
+        if (c === 'declined') return 'declined';
+        if (c === 'rate_limited') setMsg('err', 'Bitte kurz warten und nochmal tippen.');
+        else if (c === 'too_large') setMsg('err', 'Die Datei ist zu groß zum Speichern. Probier „Jetzt auch komprimieren“ bzw. eine stärkere Stufe.');
+        else setMsg('err', 'Speichern hat nicht geklappt. Bitte nochmal versuchen.');
+        return 'error';
+      });
+    });
+  }
+  // Mehrere Dateien: ohne Claude alle auf einmal ins Teilen-Menü (iOS erlaubt pro Tippen nur einen Teilen-Dialog)
+  function saveMany(list, msgEl) {
+    var setMsg = function (kind, text) { msgEl.className = 'msg ' + kind; msgEl.textContent = text; };
+    return getDownloads().then(function (dl) {
+      if (dl) return null; // Claude-Weg: bisherige Einzel-Logik verwenden
+      var files = list.map(function (o) { return toFile(o.name, o.data instanceof Blob ? o.data : new Blob([o.data])); });
+      return shareOrDownload(files, setMsg).then(function (r) {
+        if (r === 'saved') list.forEach(function (o) { if (o.btn) { o.btn.textContent = '✓ Gesichert'; o.btn.classList.add('done'); } });
+        return r;
+      });
+    });
+  }
+  $('saveBtn').addEventListener('click', function () {
+    if (!state.result) return;
+    savePdf(state.file.name.replace(/\.pdf$/i, '') + '_komprimiert.pdf', state.result.data, $('saveMsg'));
+  });
+
+  // ---------- Zusammenfügen ----------
+  var merge = { items: [], busy: false, result: null, nextId: 1 };
+  var mList = $('mList');
+  var mInput = $('mInput');
+
+  if (window.Sortable) {
+    Sortable.create(mList, {
+      handle: '.handle', animation: 150, delay: 0, touchStartThreshold: 3,
+      onEnd: function () {
+        var order = Array.prototype.map.call(mList.children, function (el) { return +el.dataset.id; });
+        merge.items.sort(function (a, b) { return order.indexOf(a.id) - order.indexOf(b.id); });
+        renderMerge();
+      }
+    });
+  }
+
+  mInput.addEventListener('change', function () {
+    var files = Array.prototype.slice.call(mInput.files || []);
+    mInput.value = '';
+    if (files.length) addMergeFiles(files);
+  });
+  var mPick = $('mPick');
+  ['dragenter', 'dragover'].forEach(function (t) { mPick.addEventListener(t, function (e) { e.preventDefault(); mPick.classList.add('drag'); }); });
+  ['dragleave', 'drop'].forEach(function (t) { mPick.addEventListener(t, function (e) { e.preventDefault(); mPick.classList.remove('drag'); }); });
+  mPick.addEventListener('drop', function (e) { var f = e.dataTransfer && e.dataTransfer.files; if (f && f.length) addMergeFiles(Array.prototype.slice.call(f)); });
+
+  function mError(t) { var e = $('mError'); e.textContent = t; show(e, !!t); }
+
+  function addMergeFiles(files) {
+    mError('');
+    if (!window.PDFLib) { mError('Die PDF-Bibliothek konnte nicht geladen werden. Bitte Internetverbindung prüfen und Seite neu laden.'); return; }
+    var skipped = [];
+    files.forEach(function (f) {
+      if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { skipped.push(f.name); return; }
+      var it = { id: merge.nextId++, file: f, pages: null, error: null };
+      merge.items.push(it);
+      f.arrayBuffer().then(function (buf) {
+        it.bytes = buf;
+        return PDFLib.PDFDocument.load(buf, { updateMetadata: false });
+      }).then(function (doc) {
+        it.pages = doc.getPageCount();
+      }).catch(function (e) {
+        it.error = /encrypt/i.test(String(e && e.message)) ? 'passwortgeschützt' : 'nicht lesbar';
+      }).then(renderMerge);
+    });
+    if (skipped.length) mError('Übersprungen (keine PDF): ' + skipped.join(', '));
+    show($('mResult'), false); merge.result = null;
+    renderMerge();
+  }
+
+  function renderMerge() {
+    var has = merge.items.length > 0;
+    show(mPick, !has); show($('mBody'), has && !merge.result && !merge.busy);
+    mList.innerHTML = '';
+    var pages = 0, size = 0, pending = false, bad = false;
+    merge.items.forEach(function (it, i) {
+      var el = document.createElement('div');
+      el.className = 'mitem'; el.dataset.id = it.id;
+      var info = it.error ? it.error : (it.pages == null ? 'wird gelesen …' : it.pages + (it.pages === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(it.file.size));
+      el.innerHTML = '<span class="handle" aria-label="Verschieben">⠿</span><span class="num"></span>' +
+        '<div class="meta"><div class="name"></div><div class="size' + (it.error ? ' bad' : '') + '"></div></div>' +
+        '<button class="del" aria-label="Entfernen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+      el.querySelector('.num').textContent = i + 1;
+      el.querySelector('.name').textContent = it.file.name;
+      el.querySelector('.size').textContent = info;
+      el.querySelector('.del').addEventListener('click', function () {
+        merge.items = merge.items.filter(function (x) { return x !== it; });
+        renderMerge();
+      });
+      mList.appendChild(el);
+      if (it.error) bad = true; else if (it.pages == null) pending = true; else pages += it.pages;
+      size += it.file.size;
+    });
+    var n = merge.items.length;
+    $('mTotals').textContent = n + (n === 1 ? ' Datei' : ' Dateien') + ', ' + pages + ' Seiten, ' + fmt(size) +
+      (n === 1 ? ' – füge mindestens eine weitere PDF hinzu' : '') +
+      (bad ? ' – bitte rot markierte Dateien entfernen' : '');
+    $('mRun').disabled = n < 2 || pending || bad || merge.busy;
+  }
+
+  $('mRun').addEventListener('click', function () {
+    if (merge.busy || merge.items.length < 2) return;
+    merge.busy = true; mError('');
+    show($('mBody'), false); show($('mWork'), true);
+    var bar = $('mBar').firstElementChild; bar.style.width = '0%';
+    var items = merge.items.slice();
+    var out;
+    PDFLib.PDFDocument.create().then(function (doc) {
+      out = doc;
+      var i = 0;
+      var next = function () {
+        if (i >= items.length) return Promise.resolve();
+        var it = items[i++];
+        $('mStatus').textContent = 'Füge Datei ' + i + ' von ' + items.length + ' hinzu …';
+        return PDFLib.PDFDocument.load(it.bytes, { updateMetadata: false }).then(function (src) {
+          return out.copyPages(src, src.getPageIndices());
+        }).then(function (pages) {
+          pages.forEach(function (p) { out.addPage(p); });
+          bar.style.width = Math.round((i / items.length) * 90) + '%';
+          return new Promise(function (r) { setTimeout(r, 0); }).then(next);
+        });
+      };
+      return next();
+    }).then(function () {
+      $('mStatus').textContent = 'Speichere …';
+      out.setTitle(cleanName());
+      out.setProducer('PDF Werkstatt');
+      return out.save({ useObjectStreams: true });
+    }).then(function (bytes) {
+      bar.style.width = '100%';
+      merge.busy = false;
+      merge.result = { data: bytes, pages: out.getPageCount() };
+      show($('mWork'), false);
+      $('mInfo').textContent = merge.result.pages + ' Seiten, ' + fmt(bytes.byteLength);
+      show($('mSaveMsg'), false);
+      show($('mResult'), true);
+      renderMerge();
+    }).catch(function (e) {
+      merge.busy = false;
+      show($('mWork'), false);
+      mError('Zusammenfügen fehlgeschlagen: ' + (e && e.message ? e.message : 'unbekannter Fehler'));
+      renderMerge();
+    });
+  });
+
+  function cleanName() {
+    var n = ($('mName').value || '').trim().replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|]+/g, '-');
+    return n || 'Zusammengefuegt';
+  }
+
+  $('mSave').addEventListener('click', function () {
+    if (merge.result) savePdf(cleanName() + '.pdf', merge.result.data, $('mSaveMsg'));
+  });
+  $('mEdit').addEventListener('click', function () { merge.result = null; show($('mResult'), false); renderMerge(); });
+  $('mReset').addEventListener('click', function () { merge.items = []; merge.result = null; show($('mResult'), false); mError(''); renderMerge(); });
+  $('mCompress').addEventListener('click', function () {
+    if (!merge.result) return;
+    var f;
+    try { f = new File([merge.result.data], cleanName() + '.pdf', { type: 'application/pdf' }); }
+    catch (e) { f = new Blob([merge.result.data], { type: 'application/pdf' }); f.name = cleanName() + '.pdf'; }
+    go('compress');
+    setFile(f);
+  });
+
+  // ---------- Seiten verwalten ----------
+  var pg = { file: null, bytes: null, doc: null, list: [], history: [], thumbs: {}, queue: [], rendering: false, result: null, busy: false, nextId: 1, token: 0 };
+  var pGrid = $('pGrid');
+  var pdfjsPromise = null;
+
+  function getPdfjs() {
+    if (!pdfjsPromise) {
+      pdfjsPromise = import('./pdf.min.js').then(function (lib) {
+        lib.GlobalWorkerOptions.workerPort = new Worker('pdf.worker.min.js', { type: 'module' });
+        return lib;
+      });
+      pdfjsPromise.catch(function () { pdfjsPromise = null; });
+    }
+    return pdfjsPromise;
+  }
+
+  function pError(t) { var e = $('pError'); e.textContent = t || ''; show(e, !!t); }
+
+  function syncPagesBar() {
+    show($('pBar'), currentView === 'pages' && pg.list.length > 0 && !pg.result && !pg.busy);
+  }
+
+  $('pInput').addEventListener('change', function () {
+    var f = this.files && this.files[0]; this.value = '';
+    if (f) loadPagesFile(f);
+  });
+  $('pChange').addEventListener('click', function () { $('pInput').click(); });
+  $('pNew').addEventListener('click', function () { $('pInput').click(); });
+
+  function clearThumbs() {
+    Object.keys(pg.thumbs).forEach(function (k) { try { URL.revokeObjectURL(pg.thumbs[k]); } catch (e) {} });
+    pg.thumbs = {}; pg.queue = [];
+  }
+
+  function loadPagesFile(f) {
+    pError('');
+    if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { pError('Das ist keine PDF-Datei.'); return; }
+    var token = ++pg.token;
+    if (pg.doc) { try { pg.doc.destroy(); } catch (e) {} }
+    clearThumbs();
+    pg.file = f; pg.doc = null; pg.list = []; pg.history = []; pg.result = null;
+    show($('pPick'), false); show($('pBody'), true); show($('pResult'), false);
+    $('pName').textContent = f.name; $('pCount').textContent = fmt(f.size) + ', wird geladen …';
+    show($('pLoading'), true); pGrid.innerHTML = '';
+    syncPagesBar(); updateToolbar();
+    f.arrayBuffer().then(function (buf) {
+      pg.bytes = buf;
+      return getPdfjs().then(function (lib) {
+        return lib.getDocument({ data: new Uint8Array(buf.slice(0)), isEvalSupported: false, useSystemFonts: true }).promise;
+      });
+    }).then(function (doc) {
+      if (token !== pg.token) { doc.destroy(); return; }
+      pg.doc = doc;
+      for (var i = 0; i < doc.numPages; i++) pg.list.push({ id: pg.nextId++, src: i, rot: 0, sel: false });
+      show($('pLoading'), false);
+      renderPages(); syncPagesBar();
+    }).catch(function (e) {
+      if (token !== pg.token) return;
+      show($('pLoading'), false);
+      var name = e && e.name;
+      if (name === 'PasswordException') pError('Die PDF ist mit einem Passwort geschützt. Bitte entferne zuerst den Schutz.');
+      else if (!pdfjsPromise && !(e && e.name)) pError('Die Vorschau-Bibliothek konnte nicht geladen werden. Bitte Seite neu laden.');
+      else pError('Die PDF konnte nicht geöffnet werden. Sie ist vermutlich beschädigt.');
+      show($('pBody'), false); show($('pPick'), true);
+      pg.list = []; syncPagesBar();
+    });
+  }
+
+  var io = ('IntersectionObserver' in window) ? new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) { if (en.isIntersecting) { requestThumb(+en.target.dataset.src); io.unobserve(en.target); } });
+  }, { rootMargin: '400px 0px' }) : null;
+
+  function renderPages() {
+    if (io) io.disconnect();
+    pGrid.innerHTML = '';
+    pg.list.forEach(function (it, i) {
+      var el = document.createElement('div');
+      el.className = 'pg' + (it.sel ? ' sel' : '');
+      el.dataset.id = it.id; el.dataset.src = it.src;
+      var turned = it.rot % 180 !== 0;
+      el.innerHTML = '<div class="thumb"></div><span class="check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><div class="no"></div>';
+      var th = el.querySelector('.thumb');
+      if (pg.thumbs[it.src]) {
+        var img = document.createElement('img');
+        img.src = pg.thumbs[it.src]; img.alt = '';
+        img.style.transform = 'rotate(' + it.rot + 'deg)' + (turned ? ' scale(.76)' : '');
+        th.appendChild(img);
+      } else {
+        th.innerHTML = '<div class="ph"></div>';
+        if (io) io.observe(el); else requestThumb(it.src);
+      }
+      el.querySelector('.no').innerHTML = '<b>' + (i + 1) + '</b>' + (it.src !== i ? ' <span>(war ' + (it.src + 1) + ')</span>' : '');
+      el.addEventListener('click', function () {
+        if (Date.now() - lastDragEnd < 300) return;
+        it.sel = !it.sel; el.classList.toggle('sel', it.sel); updateToolbar();
+      });
+      pGrid.appendChild(el);
+    });
+    var n = pg.list.length;
+    if (pg.file) $('pCount').textContent = n + (n === 1 ? ' Seite' : ' Seiten') + (pg.doc && n !== pg.doc.numPages ? ' (von ' + pg.doc.numPages + ')' : '') + ', ' + fmt(pg.file.size);
+    updateToolbar();
+  }
+
+  function requestThumb(src) {
+    if (pg.thumbs[src] || pg.queue.indexOf(src) >= 0) return;
+    pg.queue.push(src);
+    pumpThumbs();
+  }
+
+  function pumpThumbs() {
+    if (pg.rendering || !pg.queue.length || !pg.doc) return;
+    pg.rendering = true;
+    var src = pg.queue.shift(), doc = pg.doc, token = pg.token;
+    doc.getPage(src + 1).then(function (page) {
+      var vp1 = page.getViewport({ scale: 1 });
+      var targetW = Math.min(360, Math.round(140 * (window.devicePixelRatio || 2)));
+      var vp = page.getViewport({ scale: targetW / vp1.width });
+      var c = document.createElement('canvas');
+      c.width = Math.max(1, Math.floor(vp.width)); c.height = Math.max(1, Math.floor(vp.height));
+      return page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise.then(function () {
+        return new Promise(function (res) { c.toBlob(function (b) { c.width = c.height = 0; res(b); }, 'image/jpeg', 0.8); });
+      });
+    }).then(function (blob) {
+      if (token !== pg.token || !blob) return;
+      pg.thumbs[src] = URL.createObjectURL(blob);
+      pGrid.querySelectorAll('.pg[data-src="' + src + '"]').forEach(function (el) {
+        var it = pg.list.find(function (x) { return x.id === +el.dataset.id; });
+        var th = el.querySelector('.thumb'); th.innerHTML = '';
+        var img = document.createElement('img'); img.src = pg.thumbs[src]; img.alt = '';
+        if (it) img.style.transform = 'rotate(' + it.rot + 'deg)' + (it.rot % 180 ? ' scale(.76)' : '');
+        th.appendChild(img);
+      });
+    }).catch(function () { /* Vorschau-Fehler ignorieren, Seite bleibt grau */ })
+      .then(function () { pg.rendering = false; pumpThumbs(); });
+  }
+
+  var lastDragEnd = 0, dragSnapshot = null;
+  if (window.Sortable) {
+    Sortable.create(pGrid, {
+      animation: 150, delay: 250, delayOnTouchOnly: true, touchStartThreshold: 5,
+      onStart: function () { dragSnapshot = snapshot(); },
+      onEnd: function (e) {
+        lastDragEnd = Date.now();
+        if (e.oldIndex === e.newIndex) return;
+        pg.history.push(dragSnapshot);
+        var order = Array.prototype.map.call(pGrid.children, function (el) { return +el.dataset.id; });
+        pg.list.sort(function (a, b) { return order.indexOf(a.id) - order.indexOf(b.id); });
+        renderPages();
+      }
+    });
+  }
+
+  function snapshot() { return pg.list.map(function (it) { return { id: it.id, src: it.src, rot: it.rot }; }); }
+  function selected() { return pg.list.filter(function (it) { return it.sel; }); }
+
+  function updateToolbar() {
+    var s = selected().length, n = pg.list.length;
+    $('pSelInfo').textContent = s ? s + ' von ' + n + ' ausgewählt' : 'Seiten antippen zum Auswählen';
+    $('pSelAllTxt').textContent = (s === n && n > 0) ? 'Keine' : 'Alle';
+    $('pRotL').disabled = $('pRotR').disabled = $('pDel').disabled = s === 0;
+    $('pUndo').disabled = pg.history.length === 0;
+  }
+
+  $('pSelAll').addEventListener('click', function () {
+    var all = selected().length === pg.list.length;
+    pg.list.forEach(function (it) { it.sel = !all; });
+    renderPages();
+  });
+  function rotateSel(deg) {
+    if (!selected().length) return;
+    pg.history.push(snapshot());
+    selected().forEach(function (it) { it.rot = (it.rot + deg + 360) % 360; });
+    renderPages();
+  }
+  $('pRotL').addEventListener('click', function () { rotateSel(-90); });
+  $('pRotR').addEventListener('click', function () { rotateSel(90); });
+  $('pDel').addEventListener('click', function () {
+    var s = selected().length;
+    if (!s) return;
+    if (s === pg.list.length) { pError('Mindestens eine Seite muss übrig bleiben.'); return; }
+    pError('');
+    pg.history.push(snapshot());
+    pg.list = pg.list.filter(function (it) { return !it.sel; });
+    renderPages();
+  });
+  $('pUndo').addEventListener('click', function () {
+    var snap = pg.history.pop();
+    if (!snap) return;
+    pError('');
+    var selIds = {}; pg.list.forEach(function (it) { if (it.sel) selIds[it.id] = true; });
+    pg.list = snap.map(function (s) { return { id: s.id, src: s.src, rot: s.rot, sel: !!selIds[s.id] }; });
+    renderPages();
+  });
+
+  $('pSave').addEventListener('click', function () {
+    if (pg.busy || !pg.list.length) return;
+    if (!window.PDFLib) { pError('Die PDF-Bibliothek konnte nicht geladen werden. Bitte Seite neu laden.'); return; }
+    pg.busy = true; pError(''); syncPagesBar();
+    $('pSave').disabled = true;
+    var list = pg.list.slice();
+    PDFLib.PDFDocument.load(pg.bytes, { updateMetadata: false }).then(function (src) {
+      return PDFLib.PDFDocument.create().then(function (out) {
+        return out.copyPages(src, list.map(function (it) { return it.src; })).then(function (pages) {
+          pages.forEach(function (p, i) {
+            if (list[i].rot) p.setRotation(PDFLib.degrees((p.getRotation().angle + list[i].rot) % 360));
+            out.addPage(p);
+          });
+          var t = src.getTitle(); if (t) out.setTitle(t);
+          out.setProducer('PDF Werkstatt');
+          return out.save({ useObjectStreams: true });
+        });
+      });
+    }).then(function (bytes) {
+      pg.busy = false; $('pSave').disabled = false;
+      pg.result = { data: bytes, pages: list.length };
+      $('pInfo').textContent = list.length + (list.length === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(bytes.byteLength);
+      show($('pSaveMsg'), false);
+      show($('pBody'), false); show($('pResult'), true);
+      syncPagesBar(); window.scrollTo(0, 0);
+    }).catch(function (e) {
+      pg.busy = false; $('pSave').disabled = false; syncPagesBar();
+      pError(/encrypt/i.test(String(e && e.message)) ? 'Die PDF ist geschützt und kann nicht verändert werden.' : 'Das Erstellen hat nicht geklappt: ' + (e && e.message ? e.message : 'unbekannter Fehler'));
+    });
+  });
+
+  function pagesFileName() { return pg.file.name.replace(/\.pdf$/i, '') + '_bearbeitet.pdf'; }
+  $('pDownload').addEventListener('click', function () { if (pg.result) savePdf(pagesFileName(), pg.result.data, $('pSaveMsg')); });
+  $('pBack').addEventListener('click', function () { pg.result = null; show($('pResult'), false); show($('pBody'), true); syncPagesBar(); });
+  $('pCompress').addEventListener('click', function () {
+    if (!pg.result) return;
+    var name = pagesFileName(), f;
+    try { f = new File([pg.result.data], name, { type: 'application/pdf' }); }
+    catch (e) { f = new Blob([pg.result.data], { type: 'application/pdf' }); f.name = name; }
+    go('compress'); setFile(f);
+  });
+
+  // ---------- Aufteilen ----------
+  var sp = { file: null, bytes: null, count: 0, busy: false, result: null, token: 0 };
+
+  function sError(t) { var e = $('sError'); e.textContent = t || ''; show(e, !!t); }
+
+  $('sInput').addEventListener('change', function () {
+    var f = this.files && this.files[0]; this.value = '';
+    if (f) loadSplitFile(f);
+  });
+  $('sChange').addEventListener('click', function () { $('sInput').click(); });
+  $('sNew').addEventListener('click', function () { $('sInput').click(); });
+
+  function loadSplitFile(f) {
+    sError('');
+    if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { sError('Das ist keine PDF-Datei.'); return; }
+    if (!window.PDFLib) { sError('Die PDF-Bibliothek konnte nicht geladen werden. Bitte Internetverbindung prüfen und Seite neu laden.'); return; }
+    var token = ++sp.token;
+    sp.file = f; sp.bytes = null; sp.count = 0; sp.result = null;
+    show($('sResult'), false);
+    $('sName').textContent = f.name; $('sCount').textContent = fmt(f.size) + ', wird gelesen …';
+    show($('sPick'), false); show($('sBody'), true);
+    updateSplitPreview();
+    f.arrayBuffer().then(function (buf) {
+      sp.bytes = buf;
+      return PDFLib.PDFDocument.load(buf, { updateMetadata: false });
+    }).then(function (doc) {
+      if (token !== sp.token) return;
+      sp.count = doc.getPageCount();
+      $('sCount').textContent = sp.count + (sp.count === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(f.size);
+      $('sEvery').max = Math.max(1, Math.min(50, sp.count));
+      updateSplitPreview();
+    }).catch(function (e) {
+      if (token !== sp.token) return;
+      sError(/encrypt/i.test(String(e && e.message)) ? 'Die PDF ist mit einem Passwort geschützt. Bitte entferne zuerst den Schutz.' : 'Die PDF konnte nicht gelesen werden. Sie ist vermutlich beschädigt.');
+      show($('sBody'), false); show($('sPick'), true); sp.file = null;
+    });
+  }
+
+  function splitMode() { var c = document.querySelector('input[name=smode]:checked'); return c ? c.value : 'ranges'; }
+  document.querySelectorAll('input[name=smode]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      show($('sRangesBox'), splitMode() === 'ranges');
+      show($('sEveryBox'), splitMode() === 'every');
+      updateSplitPreview();
+    });
+  });
+  $('sRanges').addEventListener('input', updateSplitPreview);
+  $('sSeparate').addEventListener('change', updateSplitPreview);
+  $('sEvery').addEventListener('input', function () { $('sEveryVal').textContent = this.value; updateSplitPreview(); });
+
+  // "1-3, 7, 10-" -> [{from:1,to:3},{from:7,to:7},{from:10,to:n}]
+  function parseRanges(text, n) {
+    var parts = String(text || '').replace(/[–—]/g, '-').split(/[,;\s]+/).filter(Boolean);
+    if (!parts.length) return { error: 'Gib die gewünschten Seiten ein, z. B. 1-3, 7.' };
+    var out = [];
+    for (var i = 0; i < parts.length; i++) {
+      var m = /^(\d*)-(\d*)$/.exec(parts[i]) || /^(\d+)$/.exec(parts[i]);
+      if (!m) return { error: '„' + parts[i] + '“ verstehe ich nicht. Erlaubt sind z. B. 3, 1-4 oder 8-.' };
+      var from, to;
+      if (m.length === 2) { from = to = +m[1]; }
+      else { from = m[1] === '' ? 1 : +m[1]; to = m[2] === '' ? n : +m[2]; if (m[1] === '' && m[2] === '') return { error: 'Ein einzelner Bindestrich reicht nicht.' }; }
+      if (from < 1 || to < 1) return { error: 'Seitenzahlen beginnen bei 1.' };
+      if (from > n || to > n) return { error: 'Die PDF hat nur ' + n + ' Seiten.' };
+      if (from > to) return { error: '„' + parts[i] + '“: Die erste Zahl muss kleiner sein als die zweite.' };
+      out.push({ from: from, to: to });
+    }
+    return { ranges: out };
+  }
+
+  function rangeLabel(r) { return r.from === r.to ? 'Seite_' + r.from : 'Seiten_' + r.from + '-' + r.to; }
+  function pagesOf(r) { var a = []; for (var p = r.from; p <= r.to; p++) a.push(p - 1); return a; }
+
+  // Liefert {files:[{name, pages:[0-basiert]}]} oder {error}
+  function splitPlan() {
+    var n = sp.count, base = sp.file ? sp.file.name.replace(/\.pdf$/i, '') : 'Datei';
+    if (!n) return { error: null };
+    var mode = splitMode(), files = [];
+    if (mode === 'ranges') {
+      var r = parseRanges($('sRanges').value, n);
+      if (r.error) return r;
+      if ($('sSeparate').checked) {
+        r.ranges.forEach(function (x) { files.push({ name: base + '_' + rangeLabel(x) + '.pdf', pages: pagesOf(x) }); });
+      } else {
+        var all = []; r.ranges.forEach(function (x) { all = all.concat(pagesOf(x)); });
+        var label = r.ranges.length === 1 ? rangeLabel(r.ranges[0]) : 'Auszug';
+        files.push({ name: base + '_' + label + '.pdf', pages: all });
+      }
+    } else if (mode === 'every') {
+      var k = Math.max(1, +$('sEvery').value), t = 1;
+      for (var s = 0; s < n; s += k) {
+        var pages = []; for (var p = s; p < Math.min(n, s + k); p++) pages.push(p);
+        files.push({ name: base + '_Teil_' + (t++) + '.pdf', pages: pages });
+      }
+    } else {
+      for (var q = 0; q < n; q++) files.push({ name: base + '_Seite_' + (q + 1) + '.pdf', pages: [q] });
+    }
+    // doppelte Namen vermeiden
+    var seen = {};
+    files.forEach(function (f) { if (seen[f.name]) { seen[f.name]++; f.name = f.name.replace(/\.pdf$/, '_' + seen[f.name] + '.pdf'); } else seen[f.name] = 1; });
+    return { files: files };
+  }
+
+  function updateSplitPreview() {
+    var box = $('sPreview'), plan = splitPlan();
+    if (!sp.count) { box.className = 'msg info'; box.textContent = 'PDF wird gelesen …'; $('sRun').disabled = true; return; }
+    if (plan.error) { box.className = 'msg ' + ($('sRanges').value.trim() ? 'err' : 'info'); box.textContent = plan.error; $('sRun').disabled = true; return; }
+    var f = plan.files, total = 0; f.forEach(function (x) { total += x.pages.length; });
+    box.className = 'msg ok';
+    box.textContent = f.length === 1
+      ? 'Ergebnis: 1 PDF mit ' + total + (total === 1 ? ' Seite' : ' Seiten')
+      : 'Ergebnis: ' + f.length + ' PDFs (' + total + ' Seiten)';
+    $('sRun').disabled = sp.busy;
+  }
+
+  $('sRun').addEventListener('click', function () {
+    var plan = splitPlan();
+    if (sp.busy || !plan.files || !plan.files.length) return;
+    sp.busy = true; sError('');
+    show($('sBody'), false); show($('sWork'), true);
+    var bar = $('sBar').firstElementChild; bar.style.width = '0%';
+    var outputs = [], files = plan.files, i = 0;
+    PDFLib.PDFDocument.load(sp.bytes, { updateMetadata: false }).then(function (src) {
+      var title = src.getTitle();
+      var next = function () {
+        if (i >= files.length) return Promise.resolve();
+        var f = files[i++];
+        $('sStatus').textContent = files.length > 1 ? 'Erstelle Datei ' + i + ' von ' + files.length + ' …' : 'Erstelle PDF …';
+        return PDFLib.PDFDocument.create().then(function (out) {
+          return out.copyPages(src, f.pages).then(function (pages) {
+            pages.forEach(function (p) { out.addPage(p); });
+            if (title) out.setTitle(title);
+            out.setProducer('PDF Werkstatt');
+            return out.save({ useObjectStreams: true });
+          });
+        }).then(function (bytes) {
+          outputs.push({ name: f.name, pages: f.pages.length, data: bytes });
+          bar.style.width = Math.round((i / files.length) * (files.length > 1 ? 85 : 100)) + '%';
+          return new Promise(function (r) { setTimeout(r, 0); }).then(next);
+        });
+      };
+      return next();
+    }).then(function () {
+      bar.style.width = '100%';
+      sp.busy = false;
+      var multi = outputs.length > 1;
+      sp.result = { files: outputs, multi: multi };
+      show($('sWork'), false);
+      var size = 0; outputs.forEach(function (o) { size += o.data.byteLength; });
+      $('sInfo').textContent = outputs.length + (multi ? ' Dateien' : ' Datei') + ', ' + fmt(size);
+      var list = $('sFiles'); list.innerHTML = '';
+      outputs.forEach(function (o) {
+        var d = document.createElement('div');
+        var m = document.createElement('span'); m.className = 'fmeta';
+        var a = document.createElement('span'); a.textContent = o.name;
+        var b = document.createElement('small'); b.textContent = o.pages + (o.pages === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(o.data.byteLength);
+        m.appendChild(a); m.appendChild(b); d.appendChild(m);
+        if (multi) {
+          var btn = document.createElement('button'); btn.textContent = 'Sichern';
+          btn.addEventListener('click', function () { saveOne(o, btn); });
+          o.btn = btn; d.appendChild(btn);
+        }
+        list.appendChild(d);
+      });
+      $('sSave').textContent = multi ? 'Alle sichern' : 'Speichern / Teilen';
+      show($('sZipHint'), multi);
+      var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+      show($('sZip'), multi && (!isIOS || !window.claude)); // in der Claude-App kommt ZIP nicht sauber an
+      show($('sCompress'), !multi);
+      show($('sSaveMsg'), false);
+      show($('sResult'), true);
+      window.scrollTo(0, 0);
+    }).catch(function (e) {
+      sp.busy = false; show($('sWork'), false); show($('sBody'), true);
+      sError('Aufteilen fehlgeschlagen: ' + (e && e.message ? e.message : 'unbekannter Fehler'));
+      updateSplitPreview();
+    });
+  });
+
+  function saveOne(o, btn) {
+    return savePdf(o.name, o.data, $('sSaveMsg')).then(function (r) {
+      if (r === 'saved' && btn) { btn.textContent = '✓ Gesichert'; btn.classList.add('done'); }
+      return r;
+    });
+  }
+  var savingAll = false;
+  $('sSave').addEventListener('click', function () {
+    if (!sp.result || savingAll) return;
+    var files = sp.result.files;
+    if (!sp.result.multi) { savePdf(files[0].name, files[0].data, $('sSaveMsg')); return; }
+    savingAll = true;
+    saveMany(files, $('sSaveMsg')).then(function (r) { if (r !== null) { savingAll = false; return; } startSequentialSplit(); });
+    return;
+    function startSequentialSplit() {
+    var todo = files.filter(function (o) { return !(o.btn && o.btn.classList.contains('done')); });
+    var i = 0, savedCount = 0;
+    var next = function () {
+      if (i >= todo.length) return Promise.resolve('fertig');
+      var o = todo[i++];
+      return saveOne(o, o.btn).then(function (r) {
+        if (r === 'saved') { savedCount++; return new Promise(function (res) { setTimeout(res, 400); }).then(next); }
+        return r; // abgelehnt oder Fehler -> anhalten
+      });
+    };
+    next().then(function (r) {
+      savingAll = false;
+      var el = $('sSaveMsg');
+      if (r === 'fertig') { el.className = 'msg ok'; el.textContent = 'Alle ' + files.length + ' Dateien gesichert.'; }
+      else if (r === 'declined') { el.className = 'msg info'; el.textContent = savedCount + ' von ' + todo.length + ' gesichert. Abgebrochen – tippe erneut, um mit den restlichen weiterzumachen.'; }
+    });
+    }
+  });
+  $('sZip').addEventListener('click', function () {
+    if (!sp.result || !window.JSZip) { sError('Die ZIP-Bibliothek konnte nicht geladen werden. Bitte Seite neu laden.'); return; }
+    var zip = new JSZip();
+    sp.result.files.forEach(function (o) { zip.file(o.name, o.data); });
+    zip.generateAsync({ type: 'uint8array', compression: 'STORE' }).then(function (u8) {
+      savePdf(sp.file.name.replace(/\.pdf$/i, '') + '_aufgeteilt.zip', u8, $('sSaveMsg'));
+    });
+  });
+  $('sBack').addEventListener('click', function () { sp.result = null; show($('sResult'), false); show($('sBody'), true); updateSplitPreview(); });
+  $('sCompress').addEventListener('click', function () {
+    if (!sp.result || sp.result.multi) return;
+    var o = sp.result.files[0], f;
+    try { f = new File([o.data], o.name, { type: 'application/pdf' }); }
+    catch (e) { f = new Blob([o.data], { type: 'application/pdf' }); f.name = o.name; }
+    go('compress'); setFile(f);
+  });
+
+  // ---------- Fotos -> PDF ----------
+  var ph = { items: [], busy: false, result: null, nextId: 1, thumbQueue: [], thumbBusy: false,
+    opts: { size: 'a4', orient: 'auto', margin: 18, qual: 'mid' } };
+  var QUAL = {
+    high: { max: 3000, q: 0.9, hint: 'Beste Schärfe, größere Datei.' },
+    mid:  { max: 2000, q: 0.8, hint: 'Gut lesbar und deutlich kleiner – passt für fast alles.' },
+    low:  { max: 1400, q: 0.65, hint: 'Sehr klein, z. B. für E-Mail-Anhänge mit Größenlimit.' }
+  };
+  var phGrid = $('phGrid');
+
+  function phError(t) { var e = $('phError'); e.textContent = t || ''; show(e, !!t); }
+
+  function setupSeg(id, key, cast) {
+    var seg = $(id);
+    seg.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b || b.disabled) return;
+      seg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      ph.opts[key] = cast ? cast(b.dataset.v) : b.dataset.v;
+      syncPhotoOpts();
+    });
+  }
+  setupSeg('phSize', 'size'); setupSeg('phOrient', 'orient'); setupSeg('phMargin', 'margin', Number); setupSeg('phQual', 'qual');
+  function syncPhotoOpts() {
+    var fit = ph.opts.size === 'fit';
+    $('phOrient').querySelectorAll('button').forEach(function (b) { b.disabled = fit; b.style.opacity = fit ? .4 : ''; });
+    $('phQualHint').textContent = QUAL[ph.opts.qual].hint + (fit ? ' Bei „Wie Foto“ richtet sich die Seite nach dem Bild.' : '');
+  }
+  syncPhotoOpts();
+
+  $('phInput').addEventListener('change', function () {
+    var files = Array.prototype.slice.call(this.files || []); this.value = '';
+    if (files.length) addPhotos(files);
+  });
+
+  function addPhotos(files) {
+    phError('');
+    var skipped = [];
+    files.forEach(function (f) {
+      if (f.type && !/^image\//.test(f.type) && !/\.(heic|heif|jpe?g|png|webp|gif)$/i.test(f.name)) { skipped.push(f.name); return; }
+      var it = { id: ph.nextId++, file: f, url: URL.createObjectURL(f), thumb: null, rot: 0, error: null };
+      ph.items.push(it);
+      ph.thumbQueue.push(it);
+    });
+    if (skipped.length) phError('Übersprungen (kein Bild): ' + skipped.join(', '));
+    ph.result = null; show($('phResult'), false);
+    renderPhotos(); pumpPhotoThumbs();
+  }
+
+  function loadImg(url) {
+    return new Promise(function (res, rej) {
+      var img = new Image();
+      img.onload = function () { res(img); };
+      img.onerror = function () { rej(new Error('Bild nicht lesbar')); };
+      img.src = url;
+    });
+  }
+
+  function pumpPhotoThumbs() {
+    if (ph.thumbBusy || !ph.thumbQueue.length) return;
+    ph.thumbBusy = true;
+    var it = ph.thumbQueue.shift();
+    loadImg(it.url).then(function (img) {
+      it.w = img.naturalWidth; it.h = img.naturalHeight;
+      var s = Math.min(1, 320 / Math.max(it.w, it.h));
+      var c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(it.w * s)); c.height = Math.max(1, Math.round(it.h * s));
+      var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      return new Promise(function (r) { c.toBlob(function (b) { c.width = c.height = 0; r(b); }, 'image/jpeg', 0.8); });
+    }).then(function (b) {
+      if (b) it.thumb = URL.createObjectURL(b);
+    }).catch(function () {
+      it.error = 'Format wird nicht unterstützt';
+    }).then(function () {
+      ph.thumbBusy = false; updatePhotoItem(it); updatePhotoTotals(); pumpPhotoThumbs();
+    });
+  }
+
+  var phLastDrag = 0;
+  if (window.Sortable) {
+    Sortable.create(phGrid, {
+      animation: 150, delay: 250, delayOnTouchOnly: true, touchStartThreshold: 5, filter: 'button', preventOnFilter: false,
+      onEnd: function (e) {
+        phLastDrag = Date.now();
+        if (e.oldIndex === e.newIndex) return;
+        var order = Array.prototype.map.call(phGrid.children, function (el) { return +el.dataset.id; });
+        ph.items.sort(function (a, b) { return order.indexOf(a.id) - order.indexOf(b.id); });
+        renderPhotos();
+      }
+    });
+  }
+
+  function renderPhotos() {
+    var has = ph.items.length > 0;
+    show($('phPick'), !has);
+    show($('phBody'), has && !ph.result && !ph.busy);
+    phGrid.innerHTML = '';
+    ph.items.forEach(function (it, i) {
+      var el = document.createElement('div');
+      el.className = 'ph'; el.dataset.id = it.id;
+      el.innerHTML = '<div class="thumb"></div><div class="tools"><b></b><span>' +
+        '<button data-a="rot" aria-label="Drehen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4v6h-6"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L21 10"/></svg></button>' +
+        '<button data-a="del" aria-label="Entfernen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>';
+      el.querySelector('b').textContent = i + 1;
+      el.querySelector('[data-a=rot]').addEventListener('click', function () { it.rot = (it.rot + 90) % 360; updatePhotoItem(it); });
+      el.querySelector('[data-a=del]').addEventListener('click', function () {
+        ph.items = ph.items.filter(function (x) { return x !== it; });
+        ph.thumbQueue = ph.thumbQueue.filter(function (x) { return x !== it; });
+        try { URL.revokeObjectURL(it.url); if (it.thumb) URL.revokeObjectURL(it.thumb); } catch (e) {}
+        renderPhotos();
+      });
+      phGrid.appendChild(el);
+      updatePhotoItem(it);
+    });
+    updatePhotoTotals();
+  }
+
+  function updatePhotoItem(it) {
+    var el = phGrid.querySelector('.ph[data-id="' + it.id + '"]');
+    if (!el) return;
+    var th = el.querySelector('.thumb'); th.innerHTML = '';
+    if (it.error) { var d = document.createElement('div'); d.className = 'bad'; d.textContent = it.error; th.appendChild(d); }
+    else if (it.thumb) {
+      var img = document.createElement('img'); img.src = it.thumb; img.alt = '';
+      var turned = it.rot % 180 !== 0 && it.w && it.h;
+      var k = (turned && it.w < it.h) ? 0.77 : 1; // Hochformat gedreht -> verkleinern, damit es in die Kachel passt
+      img.style.transform = 'rotate(' + it.rot + 'deg)' + (turned ? ' scale(' + k.toFixed(2) + ')' : '');
+      th.appendChild(img);
+    } else { th.innerHTML = '<div class="ph-load"></div>'; }
+  }
+
+  function updatePhotoTotals() {
+    var n = ph.items.length, bad = ph.items.filter(function (x) { return x.error; }).length;
+    var loading = ph.items.filter(function (x) { return !x.error && !x.thumb; }).length;
+    $('phTotals').textContent = n + (n === 1 ? ' Foto' : ' Fotos') + (bad ? ' – ' + bad + ' nicht lesbar, bitte entfernen' : '') + (loading ? ' – wird geladen …' : '');
+    $('phRun').disabled = !n || bad > 0 || loading > 0 || ph.busy;
+  }
+
+  function docLook(ctx, w, h) {
+    var d = ctx.getImageData(0, 0, w, h), p = d.data;
+    for (var i = 0; i < p.length; i += 4) {
+      var g = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2];
+      g = (g - 128) * 1.55 + 128 + 18;
+      g = g < 0 ? 0 : g > 255 ? 255 : g;
+      p[i] = p[i + 1] = p[i + 2] = g;
+    }
+    ctx.putImageData(d, 0, 0);
+  }
+
+  function renderPhotoJpeg(it, q, doc) {
+    return loadImg(it.url).then(function (img) {
+      var w = img.naturalWidth, h = img.naturalHeight;
+      var s = Math.min(1, q.max / Math.max(w, h));
+      var dw = Math.round(w * s), dh = Math.round(h * s);
+      var turned = it.rot % 180 !== 0;
+      var c = document.createElement('canvas');
+      c.width = turned ? dh : dw; c.height = turned ? dw : dh;
+      var ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.translate(c.width / 2, c.height / 2);
+      ctx.rotate(it.rot * Math.PI / 180);
+      ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      if (doc) docLook(ctx, c.width, c.height);
+      var W = c.width, H = c.height;
+      return new Promise(function (res, rej) {
+        c.toBlob(function (b) {
+          c.width = c.height = 0;
+          if (!b) { rej(new Error('Bild zu groß für den Speicher')); return; }
+          b.arrayBuffer().then(function (buf) { res({ buf: buf, w: W, h: H }); }, rej);
+        }, 'image/jpeg', q.q);
+      });
+    });
+  }
+
+  function photoName() {
+    var n = ($('phName').value || '').trim().replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|]+/g, '-');
+    return (n || 'Fotos') + '.pdf';
+  }
+
+  $('phRun').addEventListener('click', function () {
+    if (ph.busy || !ph.items.length) return;
+    if (!window.PDFLib) { phError('Die PDF-Bibliothek konnte nicht geladen werden. Bitte Seite neu laden.'); return; }
+    ph.busy = true; phError('');
+    show($('phBody'), false); show($('phWork'), true);
+    var bar = $('phBar').firstElementChild; bar.style.width = '0%';
+    var items = ph.items.slice(), o = ph.opts, q = QUAL[o.qual], doc = $('phDoc').checked, out, i = 0;
+    var A4W = 595.28, A4H = 841.89, m = o.margin;
+    PDFLib.PDFDocument.create().then(function (d) {
+      out = d;
+      var next = function () {
+        if (i >= items.length) return Promise.resolve();
+        var it = items[i++];
+        $('phStatus').textContent = 'Foto ' + i + ' von ' + items.length + ' …';
+        return renderPhotoJpeg(it, q, doc).then(function (r) {
+          return out.embedJpg(r.buf).then(function (jpg) {
+            var pw, phh;
+            if (o.size === 'fit') {
+              var k = A4H / Math.max(r.w, r.h);
+              pw = r.w * k + 2 * m; phh = r.h * k + 2 * m;
+            } else {
+              var land = o.orient === 'landscape' || (o.orient === 'auto' && r.w > r.h);
+              pw = land ? A4H : A4W; phh = land ? A4W : A4H;
+            }
+            var page = out.addPage([pw, phh]);
+            var aw = pw - 2 * m, ah = phh - 2 * m;
+            var sc = Math.min(aw / r.w, ah / r.h);
+            var iw = r.w * sc, ih = r.h * sc;
+            page.drawImage(jpg, { x: (pw - iw) / 2, y: (phh - ih) / 2, width: iw, height: ih });
+            bar.style.width = Math.round((i / items.length) * 95) + '%';
+            return new Promise(function (res) { setTimeout(res, 0); }).then(next);
+          });
+        });
+      };
+      return next();
+    }).then(function () {
+      $('phStatus').textContent = 'Speichere …';
+      out.setTitle(photoName().replace(/\.pdf$/, ''));
+      out.setProducer('PDF Werkstatt');
+      return out.save();
+    }).then(function (bytes) {
+      bar.style.width = '100%';
+      ph.busy = false;
+      ph.result = { data: bytes, pages: items.length };
+      show($('phWork'), false);
+      $('phInfo').textContent = items.length + (items.length === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(bytes.byteLength);
+      show($('phSaveMsg'), false);
+      show($('phResult'), true);
+      renderPhotos(); window.scrollTo(0, 0);
+    }).catch(function (e) {
+      ph.busy = false; show($('phWork'), false);
+      phError('PDF konnte nicht erstellt werden: ' + (e && e.message ? e.message : 'unbekannter Fehler') + '. Probier die Qualität „Mittel“ oder „Klein“.');
+      renderPhotos();
+    });
+  });
+
+  $('phSave').addEventListener('click', function () { if (ph.result) savePdf(photoName(), ph.result.data, $('phSaveMsg')); });
+  $('phEdit').addEventListener('click', function () { ph.result = null; show($('phResult'), false); renderPhotos(); });
+  $('phReset').addEventListener('click', function () {
+    ph.items.forEach(function (it) { try { URL.revokeObjectURL(it.url); if (it.thumb) URL.revokeObjectURL(it.thumb); } catch (e) {} });
+    ph.items = []; ph.thumbQueue = []; ph.result = null; show($('phResult'), false); phError(''); renderPhotos();
+  });
+  $('phCompress').addEventListener('click', function () {
+    if (!ph.result) return;
+    var f;
+    try { f = new File([ph.result.data], photoName(), { type: 'application/pdf' }); }
+    catch (e) { f = new Blob([ph.result.data], { type: 'application/pdf' }); f.name = photoName(); }
+    go('compress'); setFile(f);
+  });
+
+  // ---------- Extras: Seitenzahlen, Wasserzeichen, Passwort ----------
+  var xt = { file: null, bytes: null, count: 0, busy: false, result: null, token: 0, pending: null,
+    opts: { numFmt: 'n', numPos: 'bc', wmDir: 'diag', wmColor: 'gray' } };
+
+  function xError(t) { var e = $('xError'); e.textContent = t || ''; show(e, !!t); }
+  function xSeg(id, key) {
+    var seg = $(id);
+    seg.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      seg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      xt.opts[key] = b.dataset.v; xValidate();
+    });
+  }
+  xSeg('xNumFmt', 'numFmt'); xSeg('xNumPos', 'numPos'); xSeg('xWmDir', 'wmDir'); xSeg('xWmColor', 'wmColor');
+
+  [['xNumOn', 'xNumSet'], ['xWmOn', 'xWmSet'], ['xPwOn', 'xPwSet']].forEach(function (p) {
+    $(p[0]).addEventListener('change', function () { show($(p[1]), this.checked); xValidate(); });
+  });
+  $('xWmChips').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) { $('xWmText').value = b.textContent; xValidate(); } });
+  $('xWmOpacity').addEventListener('input', function () { $('xWmOpVal').textContent = this.value + ' %'; });
+  ['xWmText', 'xPw', 'xPw2'].forEach(function (id) { $(id).addEventListener('input', xValidate); });
+  $('xPwShow').addEventListener('click', function () {
+    var vis = $('xPw').type === 'password';
+    $('xPw').type = $('xPw2').type = vis ? 'text' : 'password';
+    this.textContent = vis ? 'Verbergen' : 'Zeigen';
+  });
+
+  $('xInput').addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; if (f) loadExtrasFile(f); });
+  $('xChange').addEventListener('click', function () { $('xInput').click(); });
+  $('xNew').addEventListener('click', function () { $('xInput').click(); });
+
+  function loadExtrasFile(f) {
+    xError('');
+    if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { xError('Das ist keine PDF-Datei.'); return; }
+    if (!window.PDFLib) { xError('Die PDF-Bibliothek konnte nicht geladen werden. Bitte Seite neu laden.'); return; }
+    var token = ++xt.token;
+    xt.file = f; xt.bytes = null; xt.count = 0; xt.result = null;
+    show($('xResult'), false); show($('xPick'), false); show($('xBody'), true);
+    $('xName').textContent = f.name; $('xCount').textContent = fmt(f.size) + ', wird gelesen …';
+    xValidate();
+    f.arrayBuffer().then(function (buf) {
+      xt.bytes = buf;
+      return PDFLib.PDFDocument.load(buf, { updateMetadata: false });
+    }).then(function (doc) {
+      if (token !== xt.token) return;
+      xt.count = doc.getPageCount();
+      $('xCount').textContent = xt.count + (xt.count === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(f.size);
+      xValidate();
+    }).catch(function (e) {
+      if (token !== xt.token) return;
+      xError(/encrypt/i.test(String(e && e.message)) ? 'Die PDF ist schon mit einem Passwort geschützt. Bitte entferne zuerst den Schutz.' : 'Die PDF konnte nicht gelesen werden. Sie ist vermutlich beschädigt.');
+      show($('xBody'), false); show($('xPick'), true); xt.file = null;
+    });
+  }
+
+  // Helvetica kann nur westeuropäische Zeichen (WinAnsi)
+  function winAnsiOk(t) { return /^[\x20-\x7E -ÿ€]*$/.test(t); }
+
+  function xValidate() {
+    var num = $('xNumOn').checked, wm = $('xWmOn').checked, pw = $('xPwOn').checked, msg = '';
+    if (wm) {
+      var t = $('xWmText').value.trim();
+      if (!t) msg = 'Bitte einen Text für das Wasserzeichen eingeben.';
+      else if (!winAnsiOk(t)) msg = 'Das Wasserzeichen darf keine Emojis oder Sonderschriften enthalten.';
+    }
+    if (!msg && pw) {
+      var a = $('xPw').value, b = $('xPw2').value;
+      if (a.length < 4) msg = a ? 'Das Passwort muss mindestens 4 Zeichen lang sein.' : '';
+      else if (!/^[\x21-\x7E]+$/.test(a)) msg = 'Bitte keine Umlaute, Leerzeichen oder Emojis im Passwort.';
+      else if (a !== b) msg = b ? 'Die beiden Passwörter stimmen nicht überein.' : '';
+      if (!msg && (a.length < 4 || a !== b)) msg = ' ';
+    }
+    var c = $('xCheck'); c.textContent = msg.trim(); show(c, !!msg.trim());
+    $('xRun').disabled = xt.busy || !xt.count || !(num || wm || pw) || !!msg;
+    $('xRun').textContent = (num || wm || pw) ? 'Anwenden' : 'Mindestens eine Option einschalten';
+  }
+
+  // Text an einer sichtbaren Position zeichnen – berücksichtigt gedrehte Seiten
+  function drawVisualText(page, text, o) {
+    var box = page.getCropBox ? page.getCropBox() : page.getMediaBox();
+    var r = ((page.getRotation().angle % 360) + 360) % 360;
+    var W = box.width, H = box.height;
+    var VW = (r === 90 || r === 270) ? H : W, VH = (r === 90 || r === 270) ? W : H;
+    var p = o.pos(VW, VH); // Start der Grundlinie in sichtbaren Koordinaten
+    var ux, uy;
+    if (r === 0) { ux = p.x; uy = p.y; }
+    else if (r === 90) { ux = W - p.y; uy = p.x; }
+    else if (r === 180) { ux = W - p.x; uy = H - p.y; }
+    else { ux = p.y; uy = H - p.x; }
+    page.drawText(text, {
+      x: box.x + ux, y: box.y + uy, size: o.size, font: o.font, color: o.color,
+      opacity: o.opacity == null ? 1 : o.opacity, rotate: PDFLib.degrees((o.angle || 0) + r)
+    });
+  }
+
+  function stampPdf(bytes) {
+    var num = $('xNumOn').checked, wm = $('xWmOn').checked;
+    if (!num && !wm) return Promise.resolve(new Uint8Array(bytes));
+    var L = PDFLib, doc, font, fontB;
+    return L.PDFDocument.load(bytes, { updateMetadata: false }).then(function (d) {
+      doc = d;
+      return Promise.all([doc.embedFont(L.StandardFonts.Helvetica), doc.embedFont(L.StandardFonts.HelveticaBold)]);
+    }).then(function (fonts) {
+      font = fonts[0]; fontB = fonts[1];
+      var pages = doc.getPages(), total = pages.length;
+      var skip = $('xNumSkip').checked;
+      var wmText = $('xWmText').value.trim();
+      var colors = { gray: L.rgb(0.45, 0.45, 0.45), red: L.rgb(0.82, 0.16, 0.12), blue: L.rgb(0.12, 0.33, 0.75) };
+      var wmOpacity = +$('xWmOpacity').value / 100;
+      pages.forEach(function (page, i) {
+        if (wm) {
+          var diag = xt.opts.wmDir === 'diag';
+          drawVisualText(page, wmText, {
+            font: fontB, color: colors[xt.opts.wmColor], opacity: wmOpacity, angle: diag ? 45 : 0, size: 10,
+            pos: function (VW, VH) {
+              // Größe so wählen, dass der Text ~75 % der Breite bzw. Diagonale füllt
+              var span = diag ? Math.min(Math.sqrt(VW * VW + VH * VH) * 0.72, Math.min(VW, VH) * 1.15) : VW * 0.72;
+              var size = Math.min(span / fontB.widthOfTextAtSize(wmText, 1), VH * 0.25);
+              this.size = size;
+              var tw = fontB.widthOfTextAtSize(wmText, size), th = size * 0.72;
+              var a = (diag ? 45 : 0) * Math.PI / 180, cos = Math.cos(a), sin = Math.sin(a);
+              return { x: VW / 2 - (tw / 2) * cos + (th / 2) * sin, y: VH / 2 - (tw / 2) * sin - (th / 2) * cos };
+            }
+          });
+        }
+        if (num && !(skip && i === 0)) {
+          var n = skip ? i : i + 1, t = skip ? total - 1 : total;
+          var label = xt.opts.numFmt === 'n' ? String(n) : xt.opts.numFmt === 'n/t' ? n + ' / ' + t : 'Seite ' + n + ' von ' + t;
+          var size = 10, tw = font.widthOfTextAtSize(label, size), pos = xt.opts.numPos;
+          drawVisualText(page, label, {
+            font: font, color: L.rgb(0.25, 0.25, 0.25), size: size, angle: 0,
+            pos: function (VW) {
+              var margin = 28, x = pos === 'bl' ? margin : pos === 'br' ? VW - margin - tw : (VW - tw) / 2;
+              return { x: x, y: 20 };
+            }
+          });
+        }
+      });
+      doc.setProducer('PDF Werkstatt');
+      return doc.save({ useObjectStreams: true });
+    });
+  }
+
+  function extrasWorkerMsg(m) {
+    if (!xt.pending) return;
+    if (m.type === 'loading') {
+      $('xStatus').textContent = 'Engine wird geladen … ' + m.pct + ' %';
+      $('xHint').textContent = 'Nur beim ersten Mal (ca. 16 MB), danach geht es schneller.';
+      var bar = $('xBar'); bar.classList.remove('indet'); bar.firstElementChild.style.width = m.pct + '%';
+    } else if (m.type === 'ready') {
+      state.engineReady = true;
+      $('xStatus').textContent = 'Verschlüssele …'; $('xHint').textContent = '';
+      var b2 = $('xBar'); b2.classList.add('indet'); b2.firstElementChild.style.width = '';
+    } else if (m.type === 'done') {
+      var p = xt.pending; xt.pending = null; p.resolve(m.data);
+    } else if (m.type === 'error') {
+      var q = xt.pending; xt.pending = null; q.reject(new Error(m.message));
+    }
+  }
+
+  function encryptPdf(u8, password) {
+    return new Promise(function (resolve, reject) {
+      xt.pending = { resolve: resolve, reject: reject };
+      var buf = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
+      ensureWorker().postMessage({ type: 'encrypt', job: 'extras', data: buf, options: { password: password } }, [buf]);
+    });
+  }
+
+  $('xRun').addEventListener('click', function () {
+    if (xt.busy || $('xRun').disabled) return;
+    if (state.busy) { xError('Bitte warten, bis das Komprimieren fertig ist.'); return; }
+    var num = $('xNumOn').checked, wm = $('xWmOn').checked, pw = $('xPwOn').checked;
+    xt.busy = true; xError('');
+    show($('xBody'), false); show($('xWork'), true);
+    $('xStatus').textContent = (num || wm) ? 'Füge ' + [num && 'Seitenzahlen', wm && 'Wasserzeichen'].filter(Boolean).join(' und ') + ' hinzu …' : 'Verschlüssele …';
+    $('xHint').textContent = ''; $('xBar').classList.add('indet');
+    stampPdf(xt.bytes).then(function (u8) {
+      if (!pw) return u8;
+      if (!state.engineReady) $('xStatus').textContent = 'Engine wird geladen …';
+      else $('xStatus').textContent = 'Verschlüssele …';
+      return encryptPdf(u8, $('xPw').value);
+    }).then(function (data) {
+      xt.busy = false;
+      var size = data.byteLength;
+      xt.result = { data: data };
+      var done = [num && 'Seitenzahlen', wm && 'Wasserzeichen „' + $('xWmText').value.trim() + '“', pw && 'Passwortschutz'].filter(Boolean);
+      $('xInfo').textContent = xt.count + (xt.count === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(size);
+      $('xDone').textContent = 'Hinzugefügt: ' + done.join(', ') + '.';
+      show($('xWork'), false); show($('xSaveMsg'), false); show($('xResult'), true);
+      window.scrollTo(0, 0);
+    }).catch(function (e) {
+      xt.busy = false; show($('xWork'), false); show($('xBody'), true);
+      xError('Das hat nicht geklappt: ' + (e && e.message ? e.message : 'unbekannter Fehler'));
+      xValidate();
+    });
+  });
+
+  function extrasFileName() {
+    var base = xt.file.name.replace(/\.pdf$/i, '');
+    return base + ($('xPwOn').checked ? '_geschuetzt' : '_bearbeitet') + '.pdf';
+  }
+  $('xSave').addEventListener('click', function () { if (xt.result) savePdf(extrasFileName(), xt.result.data, $('xSaveMsg')); });
+  $('xAgain').addEventListener('click', function () { xt.result = null; show($('xResult'), false); show($('xBody'), true); xValidate(); });
+  xValidate();
+
+  // ---------- Umwandeln: Bilder, Text, Word ----------
+  var cv = { file: null, bytes: null, doc: null, count: 0, busy: false, result: null, token: 0,
+    opts: { target: 'img', fmt: 'jpg', dpi: 150, pages: 'all' } };
+
+  function cError(t) { var e = $('cError'); e.textContent = t || ''; show(e, !!t); }
+  function cSeg(id, key, cast) {
+    var seg = $(id);
+    seg.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      seg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      cv.opts[key] = cast ? cast(b.dataset.v) : b.dataset.v; syncConvert();
+    });
+  }
+  cSeg('cTarget', 'target'); cSeg('cFmt', 'fmt'); cSeg('cDpi', 'dpi', Number); cSeg('cPagesMode', 'pages');
+  $('cRanges').addEventListener('input', syncConvert);
+
+  $('cInput').addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; if (f) loadConvertFile(f); });
+  $('cChange').addEventListener('click', function () { $('cInput').click(); });
+  $('cNew').addEventListener('click', function () { $('cInput').click(); });
+
+  function loadConvertFile(f) {
+    cError('');
+    if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { cError('Das ist keine PDF-Datei.'); return; }
+    var token = ++cv.token;
+    if (cv.doc) { try { cv.doc.destroy(); } catch (e) {} }
+    cv.file = f; cv.bytes = null; cv.doc = null; cv.count = 0; cv.result = null;
+    show($('cResult'), false); show($('cPick'), false); show($('cBody'), true);
+    $('cName').textContent = f.name; $('cCount').textContent = fmt(f.size) + ', wird geladen …';
+    syncConvert();
+    f.arrayBuffer().then(function (buf) {
+      cv.bytes = buf;
+      return getPdfjs().then(function (lib) {
+        return lib.getDocument({ data: new Uint8Array(buf.slice(0)), isEvalSupported: false, useSystemFonts: true }).promise;
+      });
+    }).then(function (doc) {
+      if (token !== cv.token) { doc.destroy(); return; }
+      cv.doc = doc; cv.count = doc.numPages;
+      $('cCount').textContent = cv.count + (cv.count === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(f.size);
+      syncConvert();
+    }).catch(function (e) {
+      if (token !== cv.token) return;
+      cError(e && e.name === 'PasswordException' ? 'Die PDF ist mit einem Passwort geschützt. Bitte entferne zuerst den Schutz.' : 'Die PDF konnte nicht geöffnet werden. Sie ist vermutlich beschädigt.');
+      show($('cBody'), false); show($('cPick'), true); cv.file = null;
+    });
+  }
+
+  function convertPages() {
+    if (cv.opts.pages === 'all') { var a = []; for (var i = 0; i < cv.count; i++) a.push(i); return { pages: a }; }
+    var r = parseRanges($('cRanges').value, cv.count);
+    if (r.error) return r;
+    var seen = {}, out = [];
+    r.ranges.forEach(function (x) { for (var p = x.from; p <= x.to; p++) if (!seen[p]) { seen[p] = 1; out.push(p - 1); } });
+    return { pages: out };
+  }
+
+  function syncConvert() {
+    var t = cv.opts.target;
+    show($('cImgSet'), t === 'img'); show($('cTxtSet'), t !== 'img'); show($('cHeadRow'), t === 'docx');
+    $('cBreakHint').textContent = t === 'docx' ? 'jede PDF-Seite beginnt auf einer neuen Word-Seite' : '„— Seite 2 —“ zwischen den Seiten';
+    show($('cRanges'), cv.opts.pages === 'sel');
+    $('cDpiHint').textContent = { 72: 'Klein, reicht zum Anschauen am Handy.', 150: 'Gute Schärfe bei moderater Größe.', 300: 'Druckqualität, große Dateien.' }[cv.opts.dpi];
+    var note = $('cNote'), sel = convertPages(), msg = '', cls = 'info';
+    if (!cv.count) msg = 'PDF wird geladen …';
+    else if (sel.error) { msg = $('cRanges').value.trim() ? sel.error : 'Gib die gewünschten Seiten ein, z. B. 1-3, 7.'; cls = $('cRanges').value.trim() ? 'err' : 'info'; }
+    else if (t === 'img') msg = sel.pages.length === 1 ? 'Ergebnis: 1 Bild' : 'Ergebnis: ' + sel.pages.length + ' Bilder – du sicherst sie einzeln oder alle auf einmal.';
+    else if (t === 'txt') msg = 'Ergebnis: eine Textdatei (.txt) ohne Formatierung. Gescannte PDFs enthalten keinen Text.';
+    else msg = 'Ergebnis: ein Word-Dokument (.docx) mit dem Text. Layout, Bilder, Tabellen und Spalten werden nicht übernommen. Gescannte PDFs enthalten keinen Text.';
+    note.className = 'msg ' + cls; note.textContent = msg;
+    $('cRun').disabled = cv.busy || !cv.count || !!sel.error;
+  }
+  syncConvert();
+
+  // Text einer Seite in Absätze zerlegen: [{text, size}]
+  function pageParagraphs(page) {
+    return page.getTextContent().then(function (tc) {
+      var items = tc.items.filter(function (it) { return it.str && it.str.trim() !== '' || (it.str === ' '); }).map(function (it) {
+        var tr = it.transform, h = Math.hypot(tr[2], tr[3]) || it.height || 10;
+        return { s: it.str, x: tr[4], y: tr[5], w: it.width || 0, h: h };
+      }).filter(function (it) { return it.s.trim() !== ''; });
+      if (!items.length) return [];
+      items.sort(function (a, b) { return Math.abs(b.y - a.y) > Math.min(a.h, b.h) * 0.5 ? b.y - a.y : a.x - b.x; });
+      // Zeilen bilden
+      var lines = [], cur = null;
+      items.forEach(function (it) {
+        if (cur && Math.abs(cur.y - it.y) <= Math.max(cur.h, it.h) * 0.5) { cur.items.push(it); cur.h = Math.max(cur.h, it.h); }
+        else { cur = { y: it.y, h: it.h, items: [it] }; lines.push(cur); }
+      });
+      lines.forEach(function (ln) {
+        ln.items.sort(function (a, b) { return a.x - b.x; });
+        var txt = '', end = null;
+        ln.items.forEach(function (it) {
+          if (end !== null && it.x - end > ln.h * 0.2 && !/\s$/.test(txt) && !/^\s/.test(it.s)) txt += ' ';
+          txt += it.s; end = it.x + it.w;
+        });
+        ln.text = txt.replace(/\s+/g, ' ').trim();
+      });
+      // Absätze bilden
+      var paras = [], p = null, prev = null;
+      lines.forEach(function (ln) {
+        if (!ln.text) return;
+        var gap = prev ? prev.y - ln.y : 0;
+        var newPara = !p || gap > Math.max(prev.h, ln.h) * 1.65 || Math.abs(ln.h - prev.h) > Math.max(ln.h, prev.h) * 0.2;
+        if (newPara) { p = { text: ln.text, size: ln.h }; paras.push(p); }
+        else if (/[A-Za-zÄÖÜäöüß]-$/.test(p.text) && /^[a-zäöüß]/.test(ln.text)) p.text = p.text.slice(0, -1) + ln.text;
+        else p.text += ' ' + ln.text;
+        prev = ln;
+      });
+      return paras;
+    });
+  }
+
+  function xmlEsc(t) { return t.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  function buildDocx(pagesParas, opts) {
+    // Fließtext-Größe = Schriftgröße, in der die meisten Zeichen stehen
+    var weight = {}; pagesParas.forEach(function (pp) { pp.paras.forEach(function (p) { var k = Math.round(p.size * 2) / 2; weight[k] = (weight[k] || 0) + p.text.length; }); });
+    var body = 10, best = -1; Object.keys(weight).forEach(function (k) { if (weight[k] > best) { best = weight[k]; body = +k; } });
+    var xml = '';
+    pagesParas.forEach(function (pp, i) {
+      if (i > 0 && opts.breaks) xml += '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+      pp.paras.forEach(function (p) {
+        var head = opts.heads && p.size > body * 1.25 && p.text.length < 160;
+        var sz = head ? Math.min(40, Math.max(26, Math.round(p.size / body * 22))) : 22;
+        xml += '<w:p>' + (head ? '<w:pPr><w:spacing w:before="240" w:after="120"/><w:keepNext/></w:pPr>' : '') +
+          '<w:r>' + (head ? '<w:rPr><w:b/><w:sz w:val="' + sz + '"/></w:rPr>' : '') +
+          '<w:t xml:space="preserve">' + xmlEsc(p.text) + '</w:t></w:r></w:p>';
+      });
+    });
+    var NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+    var zip = new JSZip();
+    zip.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>');
+    zip.file('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+    zip.file('word/_rels/document.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+    zip.file('word/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles ' + NS + '><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="de-DE"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="160" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults></w:styles>');
+    zip.file('word/document.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ' + NS + '><w:body>' + xml +
+      '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1134" w:left="1417" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>');
+    return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression: 'DEFLATE' });
+  }
+
+  function renderPageImage(page, dpi, fmtName) {
+    var vp1 = page.getViewport({ scale: 1 });
+    var scale = dpi / 72;
+    var maxPx = 16000000; // iOS-Grenze für Canvas-Fläche
+    if (vp1.width * vp1.height * scale * scale > maxPx) scale = Math.sqrt(maxPx / (vp1.width * vp1.height));
+    var vp = page.getViewport({ scale: scale });
+    var c = document.createElement('canvas');
+    c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+    var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    return page.render({ canvasContext: ctx, viewport: vp }).promise.then(function () {
+      return new Promise(function (res, rej) {
+        c.toBlob(function (b) { var w = c.width, h = c.height; c.width = c.height = 0; b ? res({ blob: b, w: w, h: h }) : rej(new Error('Bild zu groß')); },
+          fmtName === 'png' ? 'image/png' : 'image/jpeg', 0.9);
+      });
+    });
+  }
+
+  $('cRun').addEventListener('click', function () {
+    var sel = convertPages();
+    if (cv.busy || !cv.doc || sel.error) return;
+    var t = cv.opts.target, pages = sel.pages, doc = cv.doc, base = cv.file.name.replace(/\.pdf$/i, '');
+    if (t === 'docx' && !window.JSZip) { cError('Eine benötigte Bibliothek konnte nicht geladen werden. Bitte Seite neu laden.'); return; }
+    cv.busy = true; cError('');
+    show($('cBody'), false); show($('cWork'), true);
+    var bar = $('cBar').firstElementChild; bar.style.width = '0%';
+    var i = 0, files = [], pagesParas = [], chars = 0;
+    var step = function () {
+      if (i >= pages.length) return Promise.resolve();
+      var idx = pages[i++];
+      $('cStatus').textContent = (t === 'img' ? 'Erstelle Bild ' : 'Lese Text von Seite ') + i + ' von ' + pages.length + ' …';
+      return doc.getPage(idx + 1).then(function (page) {
+        if (t === 'img') {
+          return renderPageImage(page, cv.opts.dpi, cv.opts.fmt).then(function (r) {
+            files.push({ name: base + '_Seite_' + (idx + 1) + '.' + cv.opts.fmt, data: r.blob, info: r.w + ' × ' + r.h + ' px, ' + fmt(r.blob.size) });
+            page.cleanup();
+          });
+        }
+        return pageParagraphs(page).then(function (paras) {
+          paras.forEach(function (p) { chars += p.text.length; });
+          pagesParas.push({ no: idx + 1, paras: paras });
+          page.cleanup();
+        });
+      }).then(function () {
+        bar.style.width = Math.round((i / pages.length) * 92) + '%';
+        return new Promise(function (r) { setTimeout(r, 0); }).then(step);
+      });
+    };
+    step().then(function () {
+      if (t === 'img') return null;
+      var breaks = $('cBreaks').checked;
+      if (t === 'txt') {
+        var txt = pagesParas.map(function (pp, k) {
+          return (breaks && k > 0 ? '\n— Seite ' + pp.no + ' —\n\n' : '') + pp.paras.map(function (p) { return p.text; }).join('\n\n');
+        }).join('\n\n').trim() + '\n';
+        files.push({ name: base + '.txt', data: new Blob([txt], { type: 'text/plain' }), text: txt });
+        return null;
+      }
+      $('cStatus').textContent = 'Erstelle Word-Dokument …';
+      return buildDocx(pagesParas, { breaks: breaks, heads: $('cHeads').checked }).then(function (blob) {
+        files.push({ name: base + '.docx', data: blob });
+      });
+    }).then(function () {
+      bar.style.width = '100%';
+      cv.busy = false;
+      var multi = files.length > 1;
+      cv.result = { files: files, multi: multi, target: t };
+      show($('cWork'), false);
+      var size = 0; files.forEach(function (f) { size += f.data.size; });
+      $('cInfo').textContent = (t === 'img' ? files.length + (multi ? ' Bilder' : ' Bild') : (t === 'txt' ? 'Textdatei' : 'Word-Dokument')) + ', ' + fmt(size);
+      var warn = $('cWarn');
+      if (t !== 'img' && chars < pages.length * 20) {
+        warn.textContent = 'In dieser PDF wurde kaum Text gefunden. Vermutlich ist sie gescannt oder abfotografiert – dann besteht sie nur aus Bildern. Eine Texterkennung (OCR) ist im Tool nicht enthalten.';
+        show(warn, true);
+      } else show(warn, false);
+      var ta = $('cText');
+      if (t === 'txt') { ta.value = files[0].text.length > 20000 ? files[0].text.slice(0, 20000) + '\n…' : files[0].text; }
+      show(ta, t === 'txt' && chars > 0); show($('cCopy'), t === 'txt' && chars > 0);
+      var list = $('cFiles'); list.innerHTML = '';
+      files.forEach(function (o) {
+        var d = document.createElement('div');
+        var m = document.createElement('span'); m.className = 'fmeta';
+        var a = document.createElement('span'); a.textContent = o.name;
+        var b = document.createElement('small'); b.textContent = o.info || fmt(o.data.size);
+        m.appendChild(a); m.appendChild(b); d.appendChild(m);
+        if (multi) {
+          var btn = document.createElement('button'); btn.textContent = 'Sichern';
+          btn.addEventListener('click', function () { cSaveOne(o, btn); });
+          o.btn = btn; d.appendChild(btn);
+        }
+        list.appendChild(d);
+      });
+      $('cSave').textContent = multi ? 'Alle sichern' : 'Speichern / Teilen';
+      show($('cSaveMsg'), false);
+      show($('cResult'), true);
+      window.scrollTo(0, 0);
+    }).catch(function (e) {
+      cv.busy = false; show($('cWork'), false); show($('cBody'), true);
+      cError('Umwandeln fehlgeschlagen: ' + (e && e.message ? e.message : 'unbekannter Fehler') + (t === 'img' && cv.opts.dpi === 300 ? '. Probier die Auflösung „Mittel“.' : ''));
+      syncConvert();
+    });
+  });
+
+  function cSaveOne(o, btn) {
+    return savePdf(o.name, o.data, $('cSaveMsg')).then(function (r) {
+      if (r === 'saved' && btn) { btn.textContent = '✓ Gesichert'; btn.classList.add('done'); }
+      return r;
+    });
+  }
+  var cSavingAll = false;
+  $('cSave').addEventListener('click', function () {
+    if (!cv.result || cSavingAll) return;
+    var files = cv.result.files;
+    if (!cv.result.multi) { savePdf(files[0].name, files[0].data, $('cSaveMsg')); return; }
+    cSavingAll = true;
+    saveMany(files, $('cSaveMsg')).then(function (r) { if (r !== null) { cSavingAll = false; return; } startSequentialConvert(); });
+    return;
+    function startSequentialConvert() {
+    var todo = files.filter(function (o) { return !(o.btn && o.btn.classList.contains('done')); });
+    var i = 0, savedCount = 0;
+    var next = function () {
+      if (i >= todo.length) return Promise.resolve('fertig');
+      var o = todo[i++];
+      return cSaveOne(o, o.btn).then(function (r) {
+        if (r === 'saved') { savedCount++; return new Promise(function (res) { setTimeout(res, 400); }).then(next); }
+        return r;
+      });
+    };
+    next().then(function (r) {
+      cSavingAll = false;
+      var el = $('cSaveMsg');
+      if (r === 'fertig') { el.className = 'msg ok'; el.textContent = 'Alle ' + files.length + ' Dateien gesichert.'; }
+      else if (r === 'declined') { el.className = 'msg info'; el.textContent = savedCount + ' von ' + todo.length + ' gesichert. Abgebrochen – tippe erneut, um mit den restlichen weiterzumachen.'; }
+    });
+    }
+  });
+  $('cCopy').addEventListener('click', function () {
+    var f = cv.result && cv.result.files[0], el = $('cSaveMsg');
+    if (!f || !f.text) return;
+    var done = function () { el.className = 'msg ok'; el.textContent = 'Text kopiert – du kannst ihn jetzt überall einfügen.'; };
+    try {
+      navigator.clipboard.writeText(f.text).then(done, function () {
+        var ta = $('cText'); ta.value = f.text; ta.focus(); ta.select();
+        el.className = 'msg info'; el.textContent = 'Kopieren wurde blockiert. Der Text ist markiert – tippe darauf und wähle „Kopieren“.';
+      });
+    } catch (e) { el.className = 'msg info'; el.textContent = 'Kopieren hier nicht möglich. Markiere den Text im Feld oben und kopiere ihn.'; }
+  });
+  $('cBack').addEventListener('click', function () { cv.result = null; show($('cResult'), false); show($('cBody'), true); syncConvert(); });
+
+  // ---------- Info-Fenster ----------
+  (function () {
+    var sheet = $('infoSheet');
+    function open() { show(sheet, true); }
+    function close() { show(sheet, false); }
+    $('infoBtn').addEventListener('click', open);
+    $('infoClose').addEventListener('click', close);
+    sheet.addEventListener('click', function (e) { if (e.target === sheet) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  })();
+
+  // ---------- Offline (Service Worker) ----------
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+
+  // ---------- Fehler ----------
+  function showError(t) { var e = $('errorBox'); e.textContent = t; show(e, true); }
+  function hideError() { show($('errorBox'), false); }
+
+  getDownloads(); // früh anfragen, damit der Speichern-Knopf sofort bereit ist
+})();
+</script>
+</body>
+</html>
