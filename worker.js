@@ -94,6 +94,18 @@ function buildEncryptArgs(o) {
   ];
 }
 
+// Passwort entfernen: Bilder unverändert lassen
+function buildDecryptArgs(o) {
+  return [
+    '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.5', '-dNOPAUSE', '-dBATCH', '-dSAFER',
+    '-dDownsampleColorImages=false', '-dDownsampleGrayImages=false', '-dDownsampleMonoImages=false',
+    '-dPassThroughJPEGImages=true', '-dPassThroughJPXImages=true',
+    '-dAutoFilterColorImages=false', '-dAutoFilterGrayImages=false', '-dColorImageFilter=/FlateEncode', '-dGrayImageFilter=/FlateEncode',
+    '-sPDFPassword=' + (o.password || ''),
+    '-sOutputFile=/out.pdf', '/in.pdf'
+  ];
+}
+
 function safeUnlink(FS, p) { try { FS.unlink(p); } catch (e) { /* egal */ } }
 
 self.onmessage = async function (ev) {
@@ -103,7 +115,7 @@ self.onmessage = async function (ev) {
     catch (e) { post({ type: 'error', message: e.message || String(e) }); }
     return;
   }
-  if (msg.type !== 'compress' && msg.type !== 'encrypt') return;
+  if (msg.type !== 'compress' && msg.type !== 'encrypt' && msg.type !== 'decrypt') return;
   currentJob = msg.job || null;
 
   let gs;
@@ -126,7 +138,7 @@ self.onmessage = async function (ev) {
   let rc = -1;
   try {
     FS.writeFile('/in.pdf', new Uint8Array(msg.data));
-    rc = gs.callMain(msg.type === 'encrypt' ? buildEncryptArgs(msg.options) : buildArgs(msg.options));
+    rc = gs.callMain(msg.type === 'encrypt' ? buildEncryptArgs(msg.options) : msg.type === 'decrypt' ? buildDecryptArgs(msg.options) : buildArgs(msg.options));
   } catch (e) {
     rc = (e && typeof e.status === 'number') ? e.status : -1;
     if (rc === -1) gsPromise = null; // Engine abgestürzt -> beim nächsten Mal neu starten
@@ -141,7 +153,7 @@ self.onmessage = async function (ev) {
   const text = log.join('\n');
   if (rc !== 0 || !out || out.length < 100 || totalPages === 0) {
     let reason = 'Die Datei konnte nicht verarbeitet werden.';
-    if (/password/i.test(text)) reason = 'Die PDF ist mit einem Passwort geschützt. Bitte entferne zuerst den Schutz.';
+    if (/password/i.test(text)) reason = msg.type === 'decrypt' ? 'WRONG_PASSWORD' : 'Die PDF ist mit einem Passwort geschützt. Entferne den Schutz zuerst mit „Passwort entfernen“.';
     else if (totalPages === 0 || /Unrecoverable|undefined in|syntaxerror|not a PDF|No pages/i.test(text)) reason = 'Die PDF scheint beschädigt oder kein gültiges PDF zu sein.';
     post({ type: 'error', message: reason });
     return;

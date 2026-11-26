@@ -576,7 +576,12 @@
     <div class="binder">
       <button class="tool" id="openExtras" style="--c: var(--t-extras)">
         <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg></span>
-        <span class="tx"><b>Extras</b><small>Seitenzahlen, Wasserzeichen, Passwort</small></span>
+        <span class="tx"><b>Extras</b><small>Texterkennung, Seitenzahlen, Wasserzeichen, Passwort</small></span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="tool" id="openUnlock" style="--c: var(--t-extras)">
+        <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></span>
+        <span class="tx"><b>Passwort entfernen</b><small>geschützte PDF entsperren, wenn du das Passwort kennst</small></span>
         <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
     </div>
@@ -1211,6 +1216,17 @@
         <button class="link" id="xChange">Ändern</button>
       </div>
 
+      <div class="card hidden" id="xLock" style="margin-top:14px">
+        <div class="t" style="display:grid;gap:4px"><b>Diese PDF ist mit einem Passwort geschützt</b>
+          <small class="hint">Gib das Passwort ein, mit dem sie sich öffnen lässt. Danach kannst du sie ohne Passwort speichern und bearbeiten.</small></div>
+        <div class="pwrow" style="margin-top:12px">
+          <input type="password" class="xinput" id="xUnPw" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Passwort" aria-label="Passwort der PDF">
+        </div>
+        <div class="msg err hidden" id="xUnErr" style="margin-top:10px"></div>
+        <button class="btn" id="xUnlock" style="margin-top:12px" disabled>Schutz entfernen</button>
+      </div>
+
+      <div id="xOpts">
       <!-- Texterkennung -->
       <div class="card xopt" style="margin-top:14px">
         <div class="row">
@@ -1284,6 +1300,7 @@
 
       <div style="margin-top:18px">
         <button class="btn" id="xRun" disabled>Anwenden</button>
+      </div>
       </div>
     </div>
 
@@ -1457,7 +1474,7 @@
   $('openScan').addEventListener('click', function () { go('scan'); });
   $('openSign').addEventListener('click', function () { gSetMode('sign'); go('sign'); });
   $('openMark').addEventListener('click', function () { gSetMode('mark'); go('sign'); });
-  $('openExtras').addEventListener('click', function () { go('extras'); });
+  $('openExtras').addEventListener('click', function () { xt.wantUnlock = false; go('extras'); });
   $('openConvert').addEventListener('click', function () { go('convert'); });
   $('backHome').addEventListener('click', function () { if (!state.busy) go('home'); });
   document.querySelectorAll('[data-home]').forEach(function (b) { b.addEventListener('click', function () { if (!merge.busy && !pg.busy && !sp.busy && !ph.busy && !xt.busy && !cv.busy && !sc.busy && !sg.busy) go('home'); }); });
@@ -1870,7 +1887,7 @@
       if (token !== pg.token) return;
       show($('pLoading'), false);
       var name = e && e.name;
-      if (name === 'PasswordException') pError('Die PDF ist mit einem Passwort geschützt. Bitte entferne zuerst den Schutz.');
+      if (name === 'PasswordException') pError('Die PDF ist mit einem Passwort geschützt. Entferne den Schutz zuerst mit „Passwort entfernen“.');
       else if (!pdfjsPromise && !(e && e.name)) pError('Die Vorschau-Bibliothek konnte nicht geladen werden. Bitte Seite neu laden.');
       else pError('Die PDF konnte nicht geöffnet werden. Sie ist vermutlich beschädigt.');
       show($('pBody'), false); show($('pPick'), true);
@@ -2079,7 +2096,7 @@
       updateSplitPreview();
     }).catch(function (e) {
       if (token !== sp.token) return;
-      sError(/encrypt/i.test(String(e && e.message)) ? 'Die PDF ist mit einem Passwort geschützt. Bitte entferne zuerst den Schutz.' : 'Die PDF konnte nicht gelesen werden. Sie ist vermutlich beschädigt.');
+      sError(/encrypt/i.test(String(e && e.message)) ? 'Die PDF ist mit einem Passwort geschützt. Entferne den Schutz zuerst mit „Passwort entfernen“.' : 'Die PDF konnte nicht gelesen werden. Sie ist vermutlich beschädigt.');
       show($('sBody'), false); show($('sPick'), true); sp.file = null;
     });
   }
@@ -2561,8 +2578,8 @@
     if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { xError('Das ist keine PDF-Datei.'); return; }
     if (!window.PDFLib) { xError('Die PDF-Bibliothek konnte nicht geladen werden. Bitte Seite neu laden.'); return; }
     var token = ++xt.token;
-    xt.file = f; xt.bytes = null; xt.count = 0; xt.result = null;
-    show($('xResult'), false); show($('xPick'), false); show($('xBody'), true);
+    xt.file = f; xt.bytes = null; xt.count = 0; xt.result = null; xt.locked = false; xt.unlocked = false;
+    show($('xResult'), false); show($('xPick'), false); show($('xBody'), true); show($('xLock'), false); show($('xOpts'), true);
     $('xName').textContent = f.name; $('xCount').textContent = fmt(f.size) + ', wird gelesen …';
     xValidate();
     f.arrayBuffer().then(function (buf) {
@@ -2572,11 +2589,58 @@
       if (token !== xt.token) return;
       xt.count = doc.getPageCount();
       $('xCount').textContent = xt.count + (xt.count === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(f.size);
+      if (xt.wantUnlock) { xt.wantUnlock = false; xError('Diese PDF hat keinen Passwortschutz. Du kannst sie direkt verwenden.'); }
       xValidate();
     }).catch(function (e) {
       if (token !== xt.token) return;
-      xError(/encrypt/i.test(String(e && e.message)) ? 'Die PDF ist schon mit einem Passwort geschützt. Bitte entferne zuerst den Schutz.' : 'Die PDF konnte nicht gelesen werden. Sie ist vermutlich beschädigt.');
+      if (/encrypt/i.test(String(e && e.message))) { xLocked(); return; }
+      xError('Die PDF konnte nicht gelesen werden. Sie ist vermutlich beschädigt.');
       show($('xBody'), false); show($('xPick'), true); xt.file = null;
+    });
+  }
+
+  // ---------- Passwort entfernen ----------
+  $('openUnlock').addEventListener('click', function () { xt.wantUnlock = true; go('extras'); $('xInput').click(); });
+  function decryptPdf(buf, password) {
+    return new Promise(function (resolve, reject) {
+      xt.pending = { resolve: resolve, reject: reject };
+      ensureWorker().postMessage({ type: 'decrypt', job: 'extras', data: buf.slice(0), options: { password: password } });
+    });
+  }
+  // Verschlüsselte Datei: erst ohne Passwort versuchen (nur Bearbeitungssperre), sonst nach Passwort fragen
+  function xLocked() {
+    xt.locked = true; show($('xOpts'), false); show($('xUnErr'), false);
+    $('xCount').textContent = fmt(xt.file.size) + ', geschützt';
+    xt.busy = true; show($('xWork'), true); $('xStatus').textContent = 'Prüfe den Schutz …'; $('xHint').textContent = ''; $('xBar').classList.add('indet');
+    decryptPdf(xt.bytes, '').then(function (data) { xUnlocked(data, true); }, function (e) {
+      xt.busy = false; show($('xWork'), false);
+      if (e.message === 'WRONG_PASSWORD') { show($('xLock'), true); $('xUnPw').value = ''; $('xUnlock').disabled = true; setTimeout(function () { $('xUnPw').focus(); }, 50); }
+      else { xError(e.message); show($('xBody'), false); show($('xPick'), true); xt.file = null; }
+    });
+  }
+  $('xUnPw').addEventListener('input', function () { $('xUnlock').disabled = !this.value; show($('xUnErr'), false); });
+  $('xUnPw').addEventListener('keydown', function (e) { if (e.key === 'Enter' && this.value) $('xUnlock').click(); });
+  $('xUnlock').addEventListener('click', function () {
+    if (xt.busy || !$('xUnPw').value) return;
+    if (state.busy) { xError('Bitte warten, bis das Komprimieren fertig ist.'); return; }
+    xt.busy = true; this.disabled = true; show($('xWork'), true); show($('xLock'), false);
+    $('xStatus').textContent = state.engineReady ? 'Entferne den Schutz …' : 'Engine wird geladen …';
+    decryptPdf(xt.bytes, $('xUnPw').value).then(function (data) { xUnlocked(data, false); }, function (e) {
+      xt.busy = false; show($('xWork'), false); show($('xLock'), true); $('xUnlock').disabled = false;
+      var m = $('xUnErr'); m.textContent = e.message === 'WRONG_PASSWORD' ? 'Das Passwort stimmt nicht. Achte auf Groß- und Kleinschreibung.' : e.message; show(m, true);
+      $('xUnPw').select();
+    });
+  });
+  function xUnlocked(data, ownerOnly) {
+    xt.busy = false; xt.locked = false; xt.unlocked = true; xt.wantUnlock = false;
+    xt.bytes = data; xt.result = { data: new Uint8Array(data.slice(0)) }; xt.resultFromRun = false;
+    PDFLib.PDFDocument.load(data, { updateMetadata: false }).then(function (d) { xt.count = d.getPageCount(); }).catch(function () {}).then(function () {
+      $('xCount').textContent = xt.count + (xt.count === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(data.byteLength) + ', ohne Passwort';
+      $('xInfo').textContent = xt.count + (xt.count === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(data.byteLength);
+      $('xDone').textContent = ownerOnly ? 'Die PDF hatte nur eine Sperre gegen Bearbeiten oder Drucken. Die Sperre ist jetzt entfernt.' : 'Passwortschutz entfernt. Die Datei öffnet sich jetzt ohne Passwort.';
+      $('xAgain').textContent = 'Weiter bearbeiten';
+      show($('xWork'), false); show($('xSaveMsg'), false); show($('xBody'), false); show($('xOpts'), true); show($('xResult'), true);
+      $('xUnPw').value = ''; xValidate(); window.scrollTo(0, 0);
     });
   }
 
@@ -2716,7 +2780,7 @@
     }).then(function (data) {
       xt.busy = false;
       var size = data.byteLength;
-      xt.result = { data: data };
+      xt.result = { data: data }; xt.resultFromRun = true; $('xAgain').textContent = 'Einstellungen ändern';
       var done = [oc && (ocrRes.done ? 'Texterkennung (' + ocrRes.done + (ocrRes.done === 1 ? ' Seite)' : ' Seiten)') : 'Texterkennung (kein Text gefunden' + (ocrRes.skipped ? ', ' + ocrRes.skipped + ' Seiten hatten schon Text' : '') + ')'), num && 'Seitenzahlen', wm && 'Wasserzeichen „' + $('xWmText').value.trim() + '“', pw && 'Passwortschutz'].filter(Boolean);
       $('xInfo').textContent = xt.count + (xt.count === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(size);
       $('xDone').textContent = 'Hinzugefügt: ' + done.join(', ') + '.';
@@ -2731,6 +2795,7 @@
 
   function extrasFileName() {
     var base = xt.file.name.replace(/\.pdf$/i, '');
+    if (xt.unlocked && xt.result && !xt.resultFromRun) return base + '_ohne_Passwort.pdf';
     return base + ($('xPwOn').checked ? '_geschuetzt' : '_bearbeitet') + '.pdf';
   }
   $('xSave').addEventListener('click', function () { if (xt.result) savePdf(extrasFileName(), xt.result.data, $('xSaveMsg')); });
@@ -2778,7 +2843,7 @@
       syncConvert();
     }).catch(function (e) {
       if (token !== cv.token) return;
-      cError(e && e.name === 'PasswordException' ? 'Die PDF ist mit einem Passwort geschützt. Bitte entferne zuerst den Schutz.' : 'Die PDF konnte nicht geöffnet werden. Sie ist vermutlich beschädigt.');
+      cError(e && e.name === 'PasswordException' ? 'Die PDF ist mit einem Passwort geschützt. Entferne den Schutz zuerst mit „Passwort entfernen“.' : 'Die PDF konnte nicht geöffnet werden. Sie ist vermutlich beschädigt.');
       show($('cBody'), false); show($('cPick'), true); cv.file = null;
     });
   }
@@ -3358,7 +3423,7 @@
           scWork(true, 'Erkenne Text auf Seite ' + i + ' von ' + pages.length + ' …');
           return ocrImage(p.out.blob, function (m) { scWork(true, m, 'Nur beim ersten Mal, danach auch offline.'); }).then(function (r) {
             scWork(true, 'Erkenne Text auf Seite ' + i + ' von ' + pages.length + ' …');
-            if (r.pdf && r.text.trim()) { ocrCount++; return overlayText(out, page, r.pdf, { x: (pw - iw) / 2, y: (phh - ih) / 2, w: iw, h: ih }); }
+            if (r.words.length) { ocrCount++; return overlayText(out, page, r, { x: (pw - iw) / 2, y: (phh - ih) / 2, w: iw, h: ih }); }
           }).then(next);
         });
       };
@@ -3417,11 +3482,25 @@
     }
     return ocr.loading;
   }
-  // Bild (Canvas/Blob) → erkannter Text + PDF, das nur die unsichtbare Textebene enthält
+  // Bild (Canvas/Blob) → erkannter Text + Wörter mit Position (in Bildpixeln)
   function ocrImage(image, onStatus) {
-    return getOcr(onStatus).then(function (w) {
-      return w.recognize(image, { pdfTextOnly: true, pdfTitle: 'OCR' }, { text: true, pdf: true });
-    }).then(function (r) { return { text: r.data.text || '', pdf: r.data.pdf ? new Uint8Array(r.data.pdf) : null }; });
+    var size = image.width ? Promise.resolve({ w: image.width, h: image.height }) :
+      createImageBitmap(image).then(function (bm) { var r = { w: bm.width, h: bm.height }; bm.close && bm.close(); return r; });
+    return Promise.all([size, getOcr(onStatus)]).then(function (a) {
+      return a[1].recognize(image, {}, { text: true, blocks: true }).then(function (r) {
+        var words = [];
+        (r.data.blocks || []).forEach(function (b) { (b.paragraphs || []).forEach(function (p) { (p.lines || []).forEach(function (l) {
+          var bl = l.baseline || { x0: l.bbox.x0, y0: l.bbox.y1, x1: l.bbox.x1, y1: l.bbox.y1 };
+          var fs = (l.rowAttributes && l.rowAttributes.rowHeight) ? l.rowAttributes.rowHeight * 0.9 : (l.bbox.y1 - l.bbox.y0);
+          (l.words || []).forEach(function (w) {
+            var t = (w.text || '').trim(); if (!t) return;
+            var k = bl.x1 !== bl.x0 ? (w.bbox.x0 - bl.x0) / (bl.x1 - bl.x0) : 0;
+            words.push({ t: t, x0: w.bbox.x0, x1: w.bbox.x1, by: bl.y0 + (bl.y1 - bl.y0) * k, fs: fs });
+          });
+        }); }); });
+        return { text: r.data.text || '', words: words, w: a[0].w, h: a[0].h };
+      });
+    });
   }
   function renderPageForOcr(page) {
     var b = page.getViewport({ scale: 1 }), s = Math.min(300 / 72, 3000 / Math.max(b.width, b.height));
@@ -3430,11 +3509,22 @@
     var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
     return page.render({ canvasContext: x, viewport: vp }).promise.then(function () { return c; });
   }
-  // Textebene unsichtbar über einen sichtbaren Bereich der Seite legen
-  function overlayText(doc, page, layer, rect) {
-    return doc.embedPdf(layer, [0]).then(function (arr) {
-      var p = visToUser(page, rect.x, rect.y);
-      page.drawPage(arr[0], { x: p.x, y: p.y, width: rect.w, height: rect.h, rotate: PDFLib.degrees(p.r) });
+  // Erkannte Wörter unsichtbar (Deckkraft 0) über einen sichtbaren Bereich der Seite legen.
+  // Bewusst nicht „Textmodus unsichtbar“: den verwirft Ghostscript beim Komprimieren.
+  function overlayText(doc, page, res, rect) {
+    var L = PDFLib;
+    return (doc.__ocrFont ? Promise.resolve(doc.__ocrFont) : doc.embedFont(L.StandardFonts.Helvetica)).then(function (font) {
+      doc.__ocrFont = font;
+      var sx = rect.w / res.w, sy = rect.h / res.h;
+      res.words.forEach(function (w) {
+        var t = Array.prototype.map.call(w.t, function (c) { return winAnsiOk(c) ? c : '?'; }).join('');
+        var size = Math.max(1, w.fs * sy), natural = font.widthOfTextAtSize(t, size), want = (w.x1 - w.x0) * sx;
+        if (!natural || want <= 0) return;
+        var p = visToUser(page, rect.x + w.x0 * sx, rect.y + rect.h - w.by * sy);
+        page.pushOperators(L.pushGraphicsState(), L.PDFOperator.of(L.PDFOperatorNames.SetTextHorizontalScaling, [L.asPDFNumber(Math.round(want / natural * 1000) / 10)]));
+        page.drawText(t, { x: p.x, y: p.y, size: size, font: font, opacity: 0, rotate: L.degrees(p.r) });
+        page.pushOperators(L.popGraphicsState());
+      });
     });
   }
   window.__ocrPdf = function (b, f) { return ocrPdfBytes(b, f); };
@@ -3462,9 +3552,9 @@
             return renderPageForOcr(page).then(function (c) {
               return ocrImage(c, onStatus).then(function (r) {
                 c.width = c.height = 0; page.cleanup();
-                if (!r.pdf || !r.text.trim()) return;
+                if (!r.words.length) return;
                 done++; var V = visSize(pages[k]);
-                return overlayText(doc, pages[k], r.pdf, { x: 0, y: 0, w: V.w, h: V.h });
+                return overlayText(doc, pages[k], r, { x: 0, y: 0, w: V.w, h: V.h });
               });
             });
           });
@@ -3599,7 +3689,7 @@
       });
     }).catch(function (e) {
       if (token !== sg.token) return;
-      gError(/encrypt|password/i.test(String(e && (e.name + e.message))) ? 'Die PDF ist mit einem Passwort geschützt. Bitte entferne zuerst den Schutz.' : 'Die PDF konnte nicht gelesen werden. Sie ist vermutlich beschädigt.');
+      gError(/encrypt|password/i.test(String(e && (e.name + e.message))) ? 'Die PDF ist mit einem Passwort geschützt. Entferne den Schutz zuerst mit „Passwort entfernen“.' : 'Die PDF konnte nicht gelesen werden. Sie ist vermutlich beschädigt.');
       show($('gBody'), false); show($('gPick'), true); sg.file = null; gSync();
     });
   }
