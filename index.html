@@ -453,6 +453,15 @@
   .gsw[aria-pressed="true"] span { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--ink); }
   .gundo { margin-left: 8px; height: 44px; padding: 0 12px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 0.824rem; cursor: pointer; }
   .gundo:disabled { opacity: .35; }
+
+  /* Zuletzt bearbeitet */
+  .recent { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 6px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+  .rcard { flex: none; width: 116px; scroll-snap-align: start; border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 8px; text-align: left; color: var(--ink); font: inherit; cursor: pointer; box-shadow: var(--shadow); }
+  .rcard .th { width: 100%; aspect-ratio: 0.75; border-radius: 6px; background: #fff center/contain no-repeat; border: 1px solid rgba(0,0,0,.08); display: grid; place-items: center; color: #9aa1ad; font-size: 0.706rem; font-weight: 700; }
+  .rcard .nm { display: block; margin-top: 6px; font-size: 0.765rem; font-weight: 600; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; min-height: 2.5em; }
+  .rcard .dt { display: block; margin-top: 2px; font-size: 0.706rem; color: var(--muted); }
+  .rs-tools { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .rs-tools button { min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 0.882rem; cursor: pointer; }
   /* ===== Helle Variante: folgt automatisch der iPhone-Einstellung ===== */
   @media (prefers-color-scheme: light) {
     :root {
@@ -514,6 +523,11 @@
         Alles läuft auf deinem iPhone. Nichts wird hochgeladen.
       </p>
     </header>
+
+    <div id="recentWrap" class="hidden">
+      <div class="recent-head"><h2>Zuletzt bearbeitet</h2></div>
+      <div class="recent" id="recentList" role="list"></div>
+    </div>
 
     <h2>Erfassen</h2>
     <div class="binder">
@@ -1412,12 +1426,37 @@
     <div class="msg err hidden" id="cError"></div>
   </section>
 
+  <div class="sheet-bg hidden" id="recentSheet" role="dialog" aria-modal="true" aria-labelledby="rsTitle">
+    <div class="sheet">
+      <div class="grip" aria-hidden="true"></div>
+      <h3 id="rsTitle" style="word-break:break-word"></h3>
+      <p class="fine" id="rsInfo" style="margin-top:-4px"></p>
+      <div class="stack">
+        <button class="btn" id="rsShare">Speichern / Teilen</button>
+      </div>
+      <div class="msg hidden" id="rsMsg"></div>
+      <div class="xlabel" style="margin-top:14px">Weiterbearbeiten mit</div>
+      <div class="rs-tools" id="rsTools"></div>
+      <div class="ed-row" style="margin-top:14px">
+        <button class="btn ghost" id="rsDelete" style="flex:1;color:var(--err)">Entfernen</button>
+        <button class="btn ghost" id="rsClose" style="flex:1">Schließen</button>
+      </div>
+    </div>
+  </div>
+
   <div class="sheet-bg hidden" id="infoSheet" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
     <div class="sheet">
       <div class="grip" aria-hidden="true"></div>
       <h3 id="infoTitle">Über die PDF Werkstatt</h3>
-      <p>Alle Werkzeuge laufen direkt auf deinem Gerät. Deine Dateien werden nirgendwo hochgeladen oder gespeichert.</p>
-      <p class="fine">Verwendete Bausteine: Ghostscript (AGPL-3.0) für Komprimierung und Passwortschutz, pdf-lib (MIT), PDF.js (Apache-2.0), OpenCV (Apache-2.0) für den Scanner, JSZip (MIT) und SortableJS (MIT).</p>
+      <p>Alle Werkzeuge laufen direkt auf deinem Gerät. Deine Dateien werden nirgendwo hochgeladen.</p>
+      <div class="card" style="margin:12px 0">
+        <div class="row">
+          <span class="t"><b>Zuletzt bearbeitet merken</b><small>gespeicherte Ergebnisse bleiben 30 Tage nur auf diesem Gerät</small></span>
+          <span class="switch"><input type="checkbox" id="recentOn" aria-label="Zuletzt bearbeitet merken"></span>
+        </div>
+        <button class="btn ghost" id="recentClear" style="margin-top:10px">Liste leeren</button>
+      </div>
+      <p class="fine">Verwendete Bausteine: Ghostscript (AGPL-3.0) für Komprimierung und Passwortschutz, pdf-lib (MIT), PDF.js (Apache-2.0), OpenCV (Apache-2.0) für den Scanner, Tesseract (Apache-2.0) für die Texterkennung, JSZip (MIT) und SortableJS (MIT).</p>
       <p class="fine"><a href="https://ghostscript.com/" target="_blank" rel="noopener">ghostscript.com</a> · <a href="https://github.com/ArtifexSoftware/ghostpdl" target="_blank" rel="noopener">Quellcode von Ghostscript</a></p>
       <button class="btn ghost" id="infoClose">Schließen</button>
     </div>
@@ -1648,9 +1687,10 @@
     setMsg('ok', 'Als Download gespeichert (Ordner „Downloads“).');
     return Promise.resolve('saved');
   }
-  function savePdf(name, data, msgEl) {
+  function savePdf(name, data, msgEl, noRecent) {
     var setMsg = function (kind, text) { msgEl.className = 'msg ' + kind; msgEl.textContent = text; };
     var payload = data instanceof Blob ? data : new Blob([data]);
+    if (!noRecent) recentAdd(name, payload);
     return getDownloads().then(function (dl) {
       if (!dl) return shareOrDownload([toFile(name, payload)], setMsg);
       return dl.save({ filename: name, data: payload }).then(function () {
@@ -1672,6 +1712,7 @@
     return getDownloads().then(function (dl) {
       if (dl) return null; // Claude-Weg: bisherige Einzel-Logik verwenden
       var files = list.map(function (o) { return toFile(o.name, o.data instanceof Blob ? o.data : new Blob([o.data])); });
+      files.forEach(function (f) { if (/\.pdf$/i.test(f.name)) recentAdd(f.name, f); });
       return shareOrDownload(files, setMsg).then(function (r) {
         if (r === 'saved') list.forEach(function (o) { if (o.btn) { o.btn.textContent = '✓ Gesichert'; o.btn.classList.add('done'); } });
         return r;
@@ -4102,6 +4143,139 @@
   });
   $('gDownload').addEventListener('click', function () { if (sg.result) savePdf(sg.result.name, sg.result.data, $('gSaveMsg')); });
   $('gBack').addEventListener('click', function () { sg.result = null; show($('gResult'), false); show($('gBody'), true); gSync(); renderSignPage(); });
+
+
+  // ---------- Zuletzt bearbeitet (IndexedDB, nur auf diesem Gerät) ----------
+  var RECENT_MAX = 12, RECENT_DAYS = 30, RECENT_BYTES = 150 * 1024 * 1024;
+  var TOOL_NAMES = { compress: 'Komprimieren', merge: 'Zusammenfügen', pages: 'Seiten', split: 'Aufteilen', photos: 'Fotos → PDF',
+    extras: 'Extras', convert: 'Umwandeln', scan: 'Scannen', sign: 'Unterschreiben' };
+  var rdb = null, rsCur = null;
+  function recentOn() { try { return localStorage.getItem('pdfw-recent') !== '0'; } catch (e) { return true; } }
+  function openRecentDb() {
+    if (rdb) return rdb;
+    rdb = new Promise(function (res, rej) {
+      if (!window.indexedDB) { rej(new Error('kein IndexedDB')); return; }
+      var r = indexedDB.open('pdfw', 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore('recent', { keyPath: 'id' }); };
+      r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); };
+    });
+    rdb.catch(function () { rdb = null; });
+    return rdb;
+  }
+  function rtx(mode, fn) {
+    return openRecentDb().then(function (db) {
+      return new Promise(function (res, rej) {
+        var t = db.transaction('recent', mode), st = t.objectStore('recent'), out = fn(st);
+        t.oncomplete = function () { res(out && out.result !== undefined ? out.result : out); };
+        t.onerror = t.onabort = function () { rej(t.error); };
+      });
+    });
+  }
+  function recentAll() { return rtx('readonly', function (st) { return st.getAll(); }).then(function (a) { return (a || []).sort(function (x, y) { return y.date - x.date; }); }); }
+  function recentAdd(name, blob) {
+    if (!recentOn() || !/\.pdf$/i.test(name) || !blob || !blob.size) return;
+    var tool = sg && sg.mode === 'mark' && currentView === 'sign' ? 'Markieren' : (TOOL_NAMES[currentView] || '');
+    var rec = { id: Date.now() + '-' + Math.random().toString(36).slice(2, 7), name: name, size: blob.size, date: Date.now(), tool: tool, blob: blob, thumb: null };
+    recentAll().then(function (all) {
+      // gleiche Datei nicht doppelt
+      var dup = all.filter(function (r) { return r.name === name && r.size === blob.size; });
+      return rtx('readwrite', function (st) { dup.forEach(function (r) { st.delete(r.id); }); st.put(rec); });
+    }).then(recentPrune).then(renderRecent).then(function () {
+      return makeThumb(blob).then(function (t) {
+        if (!t) return; rec.thumb = t;
+        return rtx('readwrite', function (st) { st.put(rec); }).then(renderRecent);
+      });
+    }).catch(function () {});
+  }
+  function recentPrune() {
+    return recentAll().then(function (all) {
+      var keep = [], bytes = 0, limit = Date.now() - RECENT_DAYS * 864e5, drop = [];
+      all.forEach(function (r) {
+        if (r.date < limit || keep.length >= RECENT_MAX || bytes + r.size > RECENT_BYTES) drop.push(r.id);
+        else { keep.push(r); bytes += r.size; }
+      });
+      if (drop.length) return rtx('readwrite', function (st) { drop.forEach(function (id) { st.delete(id); }); });
+    });
+  }
+  function makeThumb(blob) {
+    return blob.arrayBuffer().then(function (buf) { return getPdfjs().then(function (lib) {
+      var task = lib.getDocument({ data: new Uint8Array(buf) });
+      return task.promise.then(function (pdf) { return pdf.getPage(1); }).then(function (page) {
+        var b = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: 220 / b.width });
+        var c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+        var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+        return page.render({ canvasContext: x, viewport: vp }).promise.then(function () { var u = c.toDataURL('image/jpeg', 0.7); task.destroy(); return u; });
+      }).catch(function () { task.destroy(); return null; });
+    }); }).catch(function () { return null; });
+  }
+  function relDate(t) {
+    var d = new Date(t), now = new Date(), z = function (n) { return (n < 10 ? '0' : '') + n; }, hm = z(d.getHours()) + ':' + z(d.getMinutes());
+    var day = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+    return day === 0 ? 'Heute, ' + hm : day === 1 ? 'Gestern, ' + hm : z(d.getDate()) + '.' + z(d.getMonth() + 1) + '.';
+  }
+  function renderRecent() {
+    if (!recentOn()) { show($('recentWrap'), false); return Promise.resolve(); }
+    return recentAll().then(function (all) {
+      var box = $('recentList'); box.innerHTML = '';
+      all.forEach(function (r) {
+        var b = document.createElement('button'); b.className = 'rcard'; b.setAttribute('role', 'listitem');
+        b.setAttribute('aria-label', r.name + ', ' + relDate(r.date));
+        b.innerHTML = '<span class="th">PDF</span><span class="nm"></span><span class="dt"></span>';
+        if (r.thumb) { var th = b.querySelector('.th'); th.style.backgroundImage = 'url(' + r.thumb + ')'; th.textContent = ''; }
+        b.querySelector('.nm').textContent = r.name.replace(/\.pdf$/i, '').replace(/[_-]/g, '$&\u200b');
+        b.querySelector('.dt').textContent = relDate(r.date);
+        b.addEventListener('click', function () { openRecent(r); });
+        box.appendChild(b);
+      });
+      show($('recentWrap'), all.length > 0);
+    }).catch(function () { show($('recentWrap'), false); });
+  }
+  var RS_TOOLS = [['compress', 'Komprimieren'], ['sign', 'Unterschreiben'], ['mark', 'Markieren'], ['pages', 'Seiten verwalten'],
+    ['merge', 'Zusammenfügen'], ['split', 'Aufteilen'], ['extras', 'Extras'], ['convert', 'Umwandeln']];
+  function openRecent(r) {
+    rsCur = r;
+    $('rsTitle').textContent = r.name;
+    $('rsInfo').textContent = [r.tool, relDate(r.date), fmt(r.size)].filter(Boolean).join(' · ');
+    show($('rsMsg'), false);
+    var box = $('rsTools'); box.innerHTML = '';
+    RS_TOOLS.forEach(function (t) {
+      var b = document.createElement('button'); b.textContent = t[1];
+      b.addEventListener('click', function () { openRecentIn(t[0]); });
+      box.appendChild(b);
+    });
+    show($('recentSheet'), true);
+  }
+  function openRecentIn(tool) {
+    var r = rsCur; if (!r) return;
+    var f = new File([r.blob], r.name, { type: 'application/pdf' });
+    show($('recentSheet'), false);
+    if (tool === 'sign' || tool === 'mark') { gSetMode(tool); go('sign'); loadSignFile(f); }
+    else if (tool === 'compress') { go('compress'); setFile(f); }
+    else if (tool === 'pages') { go('pages'); loadPagesFile(f); }
+    else if (tool === 'merge') { go('merge'); addMergeFiles([f]); }
+    else if (tool === 'split') { go('split'); loadSplitFile(f); }
+    else if (tool === 'extras') { xt.wantUnlock = false; go('extras'); loadExtrasFile(f); }
+    else if (tool === 'convert') { go('convert'); loadConvertFile(f); }
+  }
+  $('rsShare').addEventListener('click', function () { if (rsCur) savePdf(rsCur.name, rsCur.blob, $('rsMsg'), true); });
+  $('rsClose').addEventListener('click', function () { show($('recentSheet'), false); });
+  $('recentSheet').addEventListener('click', function (e) { if (e.target === this) show(this, false); });
+  $('rsDelete').addEventListener('click', function () {
+    var r = rsCur; if (!r) return;
+    rtx('readwrite', function (st) { st.delete(r.id); }).then(renderRecent);
+    show($('recentSheet'), false);
+  });
+  $('recentOn').checked = recentOn();
+  $('recentOn').addEventListener('change', function () {
+    try { localStorage.setItem('pdfw-recent', this.checked ? '1' : '0'); } catch (e) {}
+    if (!this.checked) rtx('readwrite', function (st) { st.clear(); }).catch(function () {});
+    renderRecent();
+  });
+  $('recentClear').addEventListener('click', function () {
+    rtx('readwrite', function (st) { st.clear(); }).then(renderRecent).catch(function () {});
+    this.textContent = 'Liste geleert'; var b = this; setTimeout(function () { b.textContent = 'Liste leeren'; }, 1800);
+  });
+  recentPrune().then(renderRecent).catch(function () {});
 
   // ---------- Info-Fenster ----------
   (function () {
