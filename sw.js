@@ -1,5 +1,5 @@
 /* PDF Werkstatt – Offline-Speicher. Die App funktioniert nach dem ersten Laden auch ohne Internet. */
-const VERSION = 'pdfw-v3';
+const VERSION = 'pdfw-v4';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './vendor/pdf-lib.min.js', './vendor/Sortable.min.js', './vendor/jszip.min.js',
