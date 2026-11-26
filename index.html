@@ -884,6 +884,13 @@
       <h2>Seitengröße</h2>
       <div class="seg" id="scSize"><button data-v="a4" class="on">A4</button><button data-v="fit">Wie Scan</button></div>
 
+      <div class="card" style="margin-top:14px">
+        <div class="row">
+          <span class="t"><b>Text erkennen</b><small>Scan wird durchsuchbar, Text lässt sich kopieren</small></span>
+          <span class="switch"><input type="checkbox" id="scOcr" aria-label="Text erkennen"></span>
+        </div>
+      </div>
+
       <h2>Dateiname</h2>
       <div class="card namefield">
         <input type="text" id="scName" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Dateiname">
@@ -1173,6 +1180,14 @@
         <span class="ico">PDF</span>
         <div class="meta"><div class="name" id="xName"></div><div class="size" id="xCount"></div></div>
         <button class="link" id="xChange">Ändern</button>
+      </div>
+
+      <!-- Texterkennung -->
+      <div class="card xopt" style="margin-top:14px">
+        <div class="row">
+          <span class="t"><b>Texterkennung (OCR)</b><small>gescannte Seiten durchsuchbar machen</small></span>
+          <span class="switch"><input type="checkbox" id="xOcrOn" aria-label="Texterkennung"></span>
+        </div>
       </div>
 
       <!-- Seitenzahlen -->
@@ -1803,7 +1818,7 @@
     pError('');
     if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { pError('Das ist keine PDF-Datei.'); return; }
     var token = ++pg.token;
-    if (pg.doc) { try { pg.doc.destroy(); } catch (e) {} }
+    if (pg.doc) { try { pg.doc.loadingTask.destroy(); } catch (e) {} }
     clearThumbs();
     pg.file = f; pg.doc = null; pg.list = []; pg.history = []; pg.result = null;
     show($('pPick'), false); show($('pBody'), true); show($('pResult'), false);
@@ -1816,7 +1831,7 @@
         return lib.getDocument({ data: new Uint8Array(buf.slice(0)), isEvalSupported: false, useSystemFonts: true }).promise;
       });
     }).then(function (doc) {
-      if (token !== pg.token) { doc.destroy(); return; }
+      if (token !== pg.token) { doc.loadingTask.destroy(); return; }
       pg.doc = doc;
       for (var i = 0; i < doc.numPages; i++) pg.list.push({ id: pg.nextId++, src: i, rot: 0, sel: false });
       show($('pLoading'), false);
@@ -2494,6 +2509,7 @@
   }
   xSeg('xNumFmt', 'numFmt'); xSeg('xNumPos', 'numPos'); xSeg('xWmDir', 'wmDir'); xSeg('xWmColor', 'wmColor');
 
+  $('xOcrOn').addEventListener('change', xValidate);
   [['xNumOn', 'xNumSet'], ['xWmOn', 'xWmSet'], ['xPwOn', 'xPwSet']].forEach(function (p) {
     $(p[0]).addEventListener('change', function () { show($(p[1]), this.checked); xValidate(); });
   });
@@ -2538,7 +2554,7 @@
   function winAnsiOk(t) { return /^[\x20-\x7E -ÿ€]*$/.test(t); }
 
   function xValidate() {
-    var num = $('xNumOn').checked, wm = $('xWmOn').checked, pw = $('xPwOn').checked, msg = '';
+    var num = $('xNumOn').checked, wm = $('xWmOn').checked, pw = $('xPwOn').checked, oc = $('xOcrOn').checked, msg = '';
     if (wm) {
       var t = $('xWmText').value.trim();
       if (!t) msg = 'Bitte einen Text für das Wasserzeichen eingeben.';
@@ -2552,8 +2568,8 @@
       if (!msg && (a.length < 4 || a !== b)) msg = ' ';
     }
     var c = $('xCheck'); c.textContent = msg.trim(); show(c, !!msg.trim());
-    $('xRun').disabled = xt.busy || !xt.count || !(num || wm || pw) || !!msg;
-    $('xRun').textContent = (num || wm || pw) ? 'Anwenden' : 'Mindestens eine Option einschalten';
+    $('xRun').disabled = xt.busy || !xt.count || !(num || wm || pw || oc) || !!msg;
+    $('xRun').textContent = (num || wm || pw || oc) ? 'Anwenden' : 'Mindestens eine Option einschalten';
   }
 
   // Text an einer sichtbaren Position zeichnen – berücksichtigt gedrehte Seiten
@@ -2650,12 +2666,19 @@
   $('xRun').addEventListener('click', function () {
     if (xt.busy || $('xRun').disabled) return;
     if (state.busy) { xError('Bitte warten, bis das Komprimieren fertig ist.'); return; }
-    var num = $('xNumOn').checked, wm = $('xWmOn').checked, pw = $('xPwOn').checked;
+    var num = $('xNumOn').checked, wm = $('xWmOn').checked, pw = $('xPwOn').checked, oc = $('xOcrOn').checked, ocrRes = null;
     xt.busy = true; xError('');
     show($('xBody'), false); show($('xWork'), true);
     $('xStatus').textContent = (num || wm) ? 'Füge ' + [num && 'Seitenzahlen', wm && 'Wasserzeichen'].filter(Boolean).join(' und ') + ' hinzu …' : 'Verschlüssele …';
     $('xHint').textContent = ''; $('xBar').classList.add('indet');
-    stampPdf(xt.bytes).then(function (u8) {
+    (oc ? ocrPdfBytes(xt.bytes, function (m, f) {
+      $('xStatus').textContent = m;
+      if (f != null) { $('xBar').classList.remove('indet'); $('xBar').firstElementChild.style.width = Math.round(f * 100) + '%'; }
+    }).then(function (r) {
+      ocrRes = r; $('xBar').classList.add('indet');
+      $('xStatus').textContent = (num || wm) ? 'Füge ' + [num && 'Seitenzahlen', wm && 'Wasserzeichen'].filter(Boolean).join(' und ') + ' hinzu …' : 'Verschlüssele …';
+      return r.data;
+    }) : Promise.resolve(xt.bytes)).then(stampPdf).then(function (u8) {
       if (!pw) return u8;
       if (!state.engineReady) $('xStatus').textContent = 'Engine wird geladen …';
       else $('xStatus').textContent = 'Verschlüssele …';
@@ -2664,7 +2687,7 @@
       xt.busy = false;
       var size = data.byteLength;
       xt.result = { data: data };
-      var done = [num && 'Seitenzahlen', wm && 'Wasserzeichen „' + $('xWmText').value.trim() + '“', pw && 'Passwortschutz'].filter(Boolean);
+      var done = [oc && (ocrRes.done ? 'Texterkennung (' + ocrRes.done + (ocrRes.done === 1 ? ' Seite)' : ' Seiten)') : 'Texterkennung (kein Text gefunden' + (ocrRes.skipped ? ', ' + ocrRes.skipped + ' Seiten hatten schon Text' : '') + ')'), num && 'Seitenzahlen', wm && 'Wasserzeichen „' + $('xWmText').value.trim() + '“', pw && 'Passwortschutz'].filter(Boolean);
       $('xInfo').textContent = xt.count + (xt.count === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(size);
       $('xDone').textContent = 'Hinzugefügt: ' + done.join(', ') + '.';
       show($('xWork'), false); show($('xSaveMsg'), false); show($('xResult'), true);
@@ -2708,7 +2731,7 @@
     cError('');
     if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { cError('Das ist keine PDF-Datei.'); return; }
     var token = ++cv.token;
-    if (cv.doc) { try { cv.doc.destroy(); } catch (e) {} }
+    if (cv.doc) { try { cv.doc.loadingTask.destroy(); } catch (e) {} }
     cv.file = f; cv.bytes = null; cv.doc = null; cv.count = 0; cv.result = null;
     show($('cResult'), false); show($('cPick'), false); show($('cBody'), true);
     $('cName').textContent = f.name; $('cCount').textContent = fmt(f.size) + ', wird geladen …';
@@ -2719,7 +2742,7 @@
         return lib.getDocument({ data: new Uint8Array(buf.slice(0)), isEvalSupported: false, useSystemFonts: true }).promise;
       });
     }).then(function (doc) {
-      if (token !== cv.token) { doc.destroy(); return; }
+      if (token !== cv.token) { doc.loadingTask.destroy(); return; }
       cv.doc = doc; cv.count = doc.numPages;
       $('cCount').textContent = cv.count + (cv.count === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(f.size);
       syncConvert();
@@ -2749,8 +2772,8 @@
     if (!cv.count) msg = 'PDF wird geladen …';
     else if (sel.error) { msg = $('cRanges').value.trim() ? sel.error : 'Gib die gewünschten Seiten ein, z. B. 1-3, 7.'; cls = $('cRanges').value.trim() ? 'err' : 'info'; }
     else if (t === 'img') msg = sel.pages.length === 1 ? 'Ergebnis: 1 Bild' : 'Ergebnis: ' + sel.pages.length + ' Bilder – du sicherst sie einzeln oder alle auf einmal.';
-    else if (t === 'txt') msg = 'Ergebnis: eine Textdatei (.txt) ohne Formatierung. Gescannte PDFs enthalten keinen Text.';
-    else msg = 'Ergebnis: ein Word-Dokument (.docx) mit dem Text. Layout, Bilder, Tabellen und Spalten werden nicht übernommen. Gescannte PDFs enthalten keinen Text.';
+    else if (t === 'txt') msg = 'Ergebnis: eine Textdatei (.txt) ohne Formatierung. Gescannte Seiten werden per Texterkennung gelesen.';
+    else msg = 'Ergebnis: ein Word-Dokument (.docx) mit dem Text. Layout, Bilder, Tabellen und Spalten werden nicht übernommen. Gescannte Seiten werden per Texterkennung gelesen.';
     note.className = 'msg ' + cls; note.textContent = msg;
     $('cRun').disabled = cv.busy || !cv.count || !!sel.error;
   }
@@ -2848,7 +2871,7 @@
     cv.busy = true; cError('');
     show($('cBody'), false); show($('cWork'), true);
     var bar = $('cBar').firstElementChild; bar.style.width = '0%';
-    var i = 0, files = [], pagesParas = [], chars = 0;
+    var i = 0, files = [], pagesParas = [], chars = 0, ocrPages = 0;
     var step = function () {
       if (i >= pages.length) return Promise.resolve();
       var idx = pages[i++];
@@ -2861,6 +2884,15 @@
           });
         }
         return pageParagraphs(page).then(function (paras) {
+          if (paras.length) return paras;
+          $('cStatus').textContent = 'Erkenne Text auf Seite ' + i + ' von ' + pages.length + ' …';
+          return renderPageForOcr(page).then(function (c) {
+            return ocrImage(c, function (m) { $('cStatus').textContent = m; }).then(function (r) {
+              c.width = c.height = 0; ocrPages++;
+              return ocrText(r.text).map(function (t) { return { text: t, size: 10 }; });
+            });
+          });
+        }).then(function (paras) {
           paras.forEach(function (p) { chars += p.text.length; });
           pagesParas.push({ no: idx + 1, paras: paras });
           page.cleanup();
@@ -2894,7 +2926,10 @@
       $('cInfo').textContent = (t === 'img' ? files.length + (multi ? ' Bilder' : ' Bild') : (t === 'txt' ? 'Textdatei' : 'Word-Dokument')) + ', ' + fmt(size);
       var warn = $('cWarn');
       if (t !== 'img' && chars < pages.length * 20) {
-        warn.textContent = 'In dieser PDF wurde kaum Text gefunden. Vermutlich ist sie gescannt oder abfotografiert – dann besteht sie nur aus Bildern. Eine Texterkennung (OCR) ist im Tool nicht enthalten.';
+        warn.textContent = 'Es wurde kaum Text gefunden, auch nicht mit der Texterkennung. Die Seiten enthalten vermutlich nur Bilder oder Handschrift.';
+        show(warn, true);
+      } else if (t !== 'img' && ocrPages) {
+        warn.textContent = ocrPages + (ocrPages === 1 ? ' Seite wurde' : ' Seiten wurden') + ' per Texterkennung gelesen. Bitte Namen, Zahlen und Beträge kurz gegenlesen.';
         show(warn, true);
       } else show(warn, false);
       var ta = $('cText');
@@ -3277,7 +3312,7 @@
     if (sc.busy || !sc.pages.length) return;
     if (!window.PDFLib) { scError('Die PDF-Bibliothek konnte nicht geladen werden. Bitte Seite neu laden.'); return; }
     sc.busy = true; scError(''); show($('scBody'), false); scWork(true, 'Erstelle PDF …');
-    var pages = sc.pages.slice(), out, i = 0, A4W = 595.28, A4H = 841.89;
+    var pages = sc.pages.slice(), out, i = 0, A4W = 595.28, A4H = 841.89, useOcr = $('scOcr').checked, ocrCount = 0;
     PDFLib.PDFDocument.create().then(function (d) {
       out = d;
       var next = function () {
@@ -3289,7 +3324,12 @@
           else { var land = w > h; pw = land ? A4H : A4W; phh = land ? A4W : A4H; }
           var page = out.addPage([pw, phh]), s2 = Math.min(pw / w, phh / h), iw = w * s2, ih = h * s2;
           page.drawImage(jpg, { x: (pw - iw) / 2, y: (phh - ih) / 2, width: iw, height: ih });
-          return next();
+          if (!useOcr) return next();
+          scWork(true, 'Erkenne Text auf Seite ' + i + ' von ' + pages.length + ' …');
+          return ocrImage(p.out.blob, function (m) { scWork(true, m, 'Nur beim ersten Mal, danach auch offline.'); }).then(function (r) {
+            scWork(true, 'Erkenne Text auf Seite ' + i + ' von ' + pages.length + ' …');
+            if (r.pdf && r.text.trim()) { ocrCount++; return overlayText(out, page, r.pdf, { x: (pw - iw) / 2, y: (phh - ih) / 2, w: iw, h: ih }); }
+          }).then(next);
         });
       };
       return next();
@@ -3299,13 +3339,18 @@
     }).then(function (bytes) {
       sc.busy = false; sc.result = { data: bytes };
       scWork(false);
-      $('scInfo').textContent = pages.length + (pages.length === 1 ? ' Seite, ' : ' Seiten, ') + fmt(bytes.byteLength);
+      $('scInfo').textContent = pages.length + (pages.length === 1 ? ' Seite, ' : ' Seiten, ') + fmt(bytes.byteLength) + (useOcr ? (ocrCount ? ', durchsuchbar' : ', kein Text erkannt') : '');
       show($('scSaveMsg'), false); show($('scResult'), true); window.scrollTo(0, 0);
     }).catch(function (e) {
       sc.busy = false; scWork(false); show($('scBody'), true);
       scError('PDF konnte nicht erstellt werden: ' + (e && e.message ? e.message : 'unbekannter Fehler'));
     });
   });
+  (function () {
+    var v = null; try { v = localStorage.getItem('pdfw-scan-ocr'); } catch (e) {}
+    $('scOcr').checked = v !== '0';
+    $('scOcr').addEventListener('change', function () { try { localStorage.setItem('pdfw-scan-ocr', this.checked ? '1' : '0'); } catch (e) {} });
+  })();
   $('scSave').addEventListener('click', function () { if (sc.result) savePdf(scanFileName(), sc.result.data, $('scSaveMsg')); });
   $('scBack').addEventListener('click', function () { sc.result = null; show($('scResult'), false); renderScans(); });
   $('scReset').addEventListener('click', function () {
@@ -3318,6 +3363,88 @@
     catch (e) { f = new Blob([sc.result.data], { type: 'application/pdf' }); f.name = scanFileName(); }
     go('compress'); setFile(f);
   });
+
+  // ---------- Texterkennung (OCR), läuft komplett auf dem Gerät ----------
+  var ocr = { worker: null, loading: null };
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      var s = document.createElement('script'); s.src = src; s.onload = res;
+      s.onerror = function () { s.remove(); rej(new Error('Die Texterkennung konnte nicht geladen werden. Beim ersten Mal ist Internet nötig.')); };
+      document.head.appendChild(s);
+    });
+  }
+  function getOcr(onStatus) {
+    if (ocr.worker) return Promise.resolve(ocr.worker);
+    if (!ocr.loading) {
+      if (onStatus) onStatus('Texterkennung wird geladen …');
+      ocr.loading = (window.Tesseract ? Promise.resolve() : loadScript('vendor/tesseract/tesseract.min.js')).then(function () {
+        return Tesseract.createWorker('deu', 1, { workerPath: 'vendor/tesseract/worker.min.js', corePath: 'vendor/tesseract/core',
+          langPath: 'vendor/tesseract/lang', workerBlobURL: false, cacheMethod: 'none' });
+      }).then(function (w) {
+        return w.setParameters({ user_defined_dpi: '300' }).then(function () { ocr.worker = w; return w; });
+      });
+      ocr.loading.catch(function () { ocr.loading = null; });
+    }
+    return ocr.loading;
+  }
+  // Bild (Canvas/Blob) → erkannter Text + PDF, das nur die unsichtbare Textebene enthält
+  function ocrImage(image, onStatus) {
+    return getOcr(onStatus).then(function (w) {
+      return w.recognize(image, { pdfTextOnly: true, pdfTitle: 'OCR' }, { text: true, pdf: true });
+    }).then(function (r) { return { text: r.data.text || '', pdf: r.data.pdf ? new Uint8Array(r.data.pdf) : null }; });
+  }
+  function renderPageForOcr(page) {
+    var b = page.getViewport({ scale: 1 }), s = Math.min(300 / 72, 3000 / Math.max(b.width, b.height));
+    var vp = page.getViewport({ scale: s }), c = document.createElement('canvas');
+    c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+    return page.render({ canvasContext: x, viewport: vp }).promise.then(function () { return c; });
+  }
+  // Textebene unsichtbar über einen sichtbaren Bereich der Seite legen
+  function overlayText(doc, page, layer, rect) {
+    return doc.embedPdf(layer, [0]).then(function (arr) {
+      var p = visToUser(page, rect.x, rect.y);
+      page.drawPage(arr[0], { x: p.x, y: p.y, width: rect.w, height: rect.h, rotate: PDFLib.degrees(p.r) });
+    });
+  }
+  window.__ocrPdf = function (b, f) { return ocrPdfBytes(b, f); };
+  function ocrText(t) { // Tesseract-Text in Absätze
+    return t.replace(/([A-Za-zÄÖÜäöüß])-\n([a-zäöüß])/g, '$1$2').split(/\n\s*\n/)
+      .map(function (s) { return s.replace(/\s*\n\s*/g, ' ').trim(); }).filter(Boolean);
+  }
+  // Ganze PDF durchsuchbar machen. Seiten, die schon Text haben, bleiben unverändert.
+  function ocrPdfBytes(bytes, onStatus) {
+    var doc, pdf, task, pages, n, done = 0, skipped = 0;
+    return PDFLib.PDFDocument.load(bytes, { updateMetadata: false }).then(function (d) {
+      doc = d; pages = doc.getPages(); return getPdfjs();
+    }).then(function (lib) {
+      task = lib.getDocument({ data: new Uint8Array(bytes.slice(0)) }); return task.promise;
+    }).then(function (p) {
+      pdf = p; n = pdf.numPages; var i = 0;
+      var next = function () {
+        if (i >= n) return Promise.resolve();
+        var k = i++;
+        return pdf.getPage(k + 1).then(function (page) {
+          return page.getTextContent().then(function (tc) {
+            var chars = tc.items.reduce(function (a, it) { return a + (it.str ? it.str.trim().length : 0); }, 0);
+            if (chars > 20) { skipped++; page.cleanup(); return; }
+            if (onStatus) onStatus('Erkenne Text auf Seite ' + (k + 1) + ' von ' + n + ' …', k / n);
+            return renderPageForOcr(page).then(function (c) {
+              return ocrImage(c, onStatus).then(function (r) {
+                c.width = c.height = 0; page.cleanup();
+                if (!r.pdf || !r.text.trim()) return;
+                done++; var V = visSize(pages[k]);
+                return overlayText(doc, pages[k], r.pdf, { x: 0, y: 0, w: V.w, h: V.h });
+              });
+            });
+          });
+        }).then(next);
+      };
+      return next();
+    }).then(function () {
+      task.destroy(); return doc.save();
+    }).then(function (out) { return { data: out, done: done, skipped: skipped, pages: n }; });
+  }
 
   // ---------- Unterschreiben & Ausfüllen ----------
   var sg = { file: null, bytes: null, pdf: null, count: 0, page: 0, items: [], busy: false, result: null, token: 0,
@@ -3345,7 +3472,7 @@
     gError('');
     if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { gError('Das ist keine PDF-Datei.'); return; }
     var token = ++sg.token;
-    if (sg.pdf) { try { sg.pdf.destroy(); } catch (e) {} }
+    if (sg.task) { try { sg.task.destroy(); } catch (e) {} sg.task = null; }
     sg.file = f; sg.bytes = null; sg.pdf = null; sg.count = 0; sg.page = 0; sg.items = []; sg.sel = null; sg.result = null; sg.fields = [];
     show($('gResult'), false); show($('gPick'), false); show($('gBody'), true); show($('gForm'), false);
     $('gName').textContent = f.name; $('gCount').textContent = fmt(f.size) + ', wird gelesen …';
@@ -3356,8 +3483,10 @@
     }).then(function (r) {
       if (token !== sg.token) return;
       buildForm(r[0]);
-      return r[1].getDocument({ data: new Uint8Array(sg.bytes.slice(0)) }).promise.then(function (pdf) {
-        if (token !== sg.token) { pdf.destroy(); return; }
+      var task = r[1].getDocument({ data: new Uint8Array(sg.bytes.slice(0)) });
+      return task.promise.then(function (pdf) {
+        if (token !== sg.token) { task.destroy(); return; }
+        sg.task = task;
         sg.pdf = pdf; sg.count = pdf.numPages;
         $('gCount').textContent = sg.count + (sg.count === 1 ? ' Seite' : ' Seiten') + ', ' + fmt(f.size);
         gSync(); return renderSignPage();

@@ -6,6 +6,7 @@ Alles läuft lokal im Browser. Dateien werden nicht hochgeladen.
 
 ## Verwendete Bausteine
 - [Ghostscript](https://ghostscript.com/) 9.56 als WebAssembly über [@jspawn/ghostscript-wasm](https://www.npmjs.com/package/@jspawn/ghostscript-wasm) – AGPL-3.0, unverändert. Quellcode: https://github.com/ArtifexSoftware/ghostpdl
+- [tesseract.js](https://github.com/naptha/tesseract.js) 7.0 mit tesseract.js-core 7.0 und deutschem Sprachmodell (tessdata best_int) – Apache-2.0, unverändert.
 - [pdf-lib](https://pdf-lib.js.org/) – MIT
 - [PDF.js](https://mozilla.github.io/pdf.js/) – Apache-2.0
 - [OpenCV.js](https://opencv.org/) über [@techstark/opencv-js](https://www.npmjs.com/package/@techstark/opencv-js) – Apache-2.0 (Scanner: Rand-Erkennung, Entzerren)
