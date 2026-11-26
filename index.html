@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0e1117">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#f2f3f6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1117" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -15,7 +16,7 @@
 <style>
   @font-face { font-family: "Archivo"; src: url("fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; font-style: normal; font-display: swap; }
   :root {
-    color-scheme: dark;
+    color-scheme: dark light;
     --bg: #0e1117; --card: rgba(255,255,255,.045); --card-solid: #171b23; --ink: #eef1f6; --muted: #8e97a6;
     --line: rgba(255,255,255,.09); --sunk: rgba(255,255,255,.035); --hi: rgba(255,255,255,.14);
     --ok: #4fd18b; --ok-soft: rgba(79,209,139,.12); --err: #ff7a6b; --err-soft: rgba(255,122,107,.12);
@@ -399,6 +400,50 @@
     :root { --muted: #c3cad5; --line: rgba(255,255,255,.32); }
     .seg button.on { box-shadow: 0 0 0 2px var(--accent) inset; }
   }
+
+  /* ===== Helle Variante: folgt automatisch der iPhone-Einstellung ===== */
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f2f3f6; --surface: #ffffff; --surface-2: #eceef2; --well: #e8ebf0; --card: #ffffff;
+      --ink: #11151c; --muted: #566170; --line: rgba(17,21,28,.12); --sunk: #eceef2; --hi: rgba(17,21,28,.16);
+      --ok: #147a45; --ok-soft: #e2f3ea; --err: #b42d22; --err-soft: #fbe7e4;
+      --t-compress: #c8371f; --t-merge: #2a5fd0; --t-pages: #6347d6; --t-split: #a65500;
+      --t-photos: #0b7c5c; --t-convert: #08758a; --t-extras: #b02d74; --t-scan: #8f6600;
+      --accent: #11151c; --accent-ink: #ffffff;
+      --shadow: 0 1px 2px rgba(17,21,28,.06), 0 4px 14px rgba(17,21,28,.05);
+    }
+    section:not(#home), section#scan { --accent-ink: #ffffff; }
+    body { background: radial-gradient(110% 45% at 80% -8%, rgba(42,95,208,.08), transparent 62%), var(--bg); background-attachment: fixed; }
+    .card, .binder, .levels { box-shadow: var(--shadow); }
+    .brand { color: var(--ink); }
+    .tool .tab, .tool + .tool .tab { color: #ffffff; box-shadow: 0 3px 10px color-mix(in srgb, var(--c) 25%, transparent); }
+    .tool:active { background: var(--sunk); }
+    .back, .link, .addmore, .mitem .num, .tile, .tag { color: var(--accent); }
+    .file .ico { background: color-mix(in srgb, var(--accent) 12%, #fff); color: var(--accent); }
+    .pick { background: color-mix(in srgb, var(--accent) 5%, #fff); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+    .seg button.on { background: #ffffff; box-shadow: 0 1px 2px rgba(17,21,28,.15), inset 0 -2px 0 var(--accent); }
+    .seg button { color: var(--muted); } .seg button.on { color: var(--ink); }
+    .level input { border-color: rgba(17,21,28,.3); }
+    .switch input { background: #d5d9e0; }
+    .progress { background: #dde1e7; }
+    .msg.info { background: var(--surface-2); }
+    .chips button { background: #ffffff; }
+    .fan { background: linear-gradient(180deg, #ffffff, #f4f5f8); border-color: var(--line); }
+    .fan::before { background: repeating-linear-gradient(rgba(17,21,28,.16) 0 3px, transparent 3px 9px); }
+    .fan i { box-shadow: none; }
+    .infobtn { background: rgba(17,21,28,.05); }
+    .infobtn:active { background: rgba(17,21,28,.1); }
+    .pbar { background: rgba(255,255,255,.92); }
+    .sheet { background: #ffffff; box-shadow: 0 -12px 40px rgba(17,21,28,.18); }
+    .sheet .grip { background: rgba(17,21,28,.2); }
+    .sheet-bg { background: rgba(17,21,28,.35); }
+    .pg .check { border-color: #fff; }
+    @media (prefers-reduced-transparency: reduce) { .pbar { background: #ffffff; } }
+    @media (prefers-contrast: more) { :root { --muted: #3a4350; --line: rgba(17,21,28,.35); } }
+  }
+  /* Scan-Editor bleibt immer dunkel (wie die iPhone-Kamera) */
+  .scan-ed { --accent: #f2c14e; --ink: #eef1f6; --muted: #8e97a6; --line: rgba(255,255,255,.12); --well: #0f1216; --surface-2: #1f232b; color: #eef1f6; }
+  .scan-ed .seg button { color: #8e97a6; } .scan-ed .seg button.on { color: #eef1f6; background: #1f232b; }
 </style>
 </head>
 <body>
