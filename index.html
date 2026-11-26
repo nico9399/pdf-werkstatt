@@ -21,7 +21,7 @@
     --line: rgba(255,255,255,.09); --sunk: rgba(255,255,255,.035); --hi: rgba(255,255,255,.14);
     --ok: #4fd18b; --ok-soft: rgba(79,209,139,.12); --err: #ff7a6b; --err-soft: rgba(255,122,107,.12);
     --t-compress: #ff6a52; --t-merge: #5b93ff; --t-pages: #9b84ff; --t-split: #ffa53a;
-    --t-photos: #34c99a; --t-convert: #2fc0de; --t-extras: #f062ad; --t-scan: #f2c14e; --t-sign: #e8e3d3;
+    --t-photos: #34c99a; --t-convert: #2fc0de; --t-extras: #f062ad; --t-scan: #f2c14e; --t-sign: #e8e3d3; --t-mark: #ffd60a;
     --accent: #eef1f6; --accent-ink: #0e1117;
     --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
     --radius: 18px; --shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 12px 32px rgba(0,0,0,.35);
@@ -438,6 +438,21 @@
   .sig-card .sig-x::before { content: ""; position: absolute; inset: -8px; }
   .sig-new { flex: none; width: 120px; height: 74px; border-radius: 12px; border: 1.5px dashed var(--line); background: transparent; color: var(--ink); font: inherit; font-size: 0.882rem; cursor: pointer; }
   @media (prefers-color-scheme: light) { section#sign { --accent-ink: #ffffff; } .gstage { box-shadow: 0 2px 14px rgba(17,21,28,.18); } }
+
+  /* Markieren */
+  section#sign .gmode { margin-bottom: 8px; }
+  .glayer.drawing { touch-action: none; cursor: crosshair; }
+  .glayer.drawing .gitem { pointer-events: none; }
+  .gitem svg.gshape { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+  .gitem.hl { mix-blend-mode: multiply; }
+  .gitem .gtxt.note { background: #fff3a8; padding: 0.4em; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+  .tbtn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .gcolors { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 6px; }
+  .gsw { width: 44px; height: 44px; border: 0; background: none; display: grid; place-items: center; cursor: pointer; padding: 0; }
+  .gsw span { width: 28px; height: 28px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.25); }
+  .gsw[aria-pressed="true"] span { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--ink); }
+  .gundo { margin-left: 8px; height: 44px; padding: 0 12px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 0.824rem; cursor: pointer; }
+  .gundo:disabled { opacity: .35; }
   /* ===== Helle Variante: folgt automatisch der iPhone-Einstellung ===== */
   @media (prefers-color-scheme: light) {
     :root {
@@ -445,7 +460,7 @@
       --ink: #11151c; --muted: #566170; --line: rgba(17,21,28,.12); --sunk: #eceef2; --hi: rgba(17,21,28,.16);
       --ok: #147a45; --ok-soft: #e2f3ea; --err: #b42d22; --err-soft: #fbe7e4;
       --t-compress: #c8371f; --t-merge: #2a5fd0; --t-pages: #6347d6; --t-split: #a65500;
-      --t-photos: #0b7c5c; --t-convert: #08758a; --t-extras: #b02d74; --t-scan: #8f6600; --t-sign: #3d4350;
+      --t-photos: #0b7c5c; --t-convert: #08758a; --t-extras: #b02d74; --t-scan: #8f6600; --t-sign: #3d4350; --t-mark: #8a6d00;
       --accent: #11151c; --accent-ink: #ffffff;
       --shadow: 0 1px 2px rgba(17,21,28,.06), 0 4px 14px rgba(17,21,28,.05);
     }
@@ -519,6 +534,11 @@
       <button class="tool" id="openSign" style="--c: var(--t-sign)">
         <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3-4 5-9 7-9s-1 9 2 9 3-4 5-4 2 3 4 3"/><path d="M3 21h18"/></svg></span>
         <span class="tx"><b>Unterschreiben</b><small>Unterschrift, Text, Datum, Haken</small></span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="tool" id="openMark" style="--c: var(--t-mark)">
+        <span class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4l5 5-9 9H6v-5z"/><path d="M4 21h9"/></svg></span>
+        <span class="tx"><b>Markieren</b><small>Textmarker, Stift, Pfeile, Notizen</small></span>
         <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <button class="tool" id="openMerge" style="--c: var(--t-merge)">
@@ -961,8 +981,8 @@
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Werkzeuge
     </button>
     <header style="padding-top:0">
-      <h1>Unterschreiben</h1>
-      <div class="sub">Unterschrift, Text, Datum oder Haken antippen, auf der Seite platzieren und mit dem Finger verschieben.</div>
+      <h1 id="gTitle">Unterschreiben</h1>
+      <div class="sub" id="gSub">Unterschrift, Text, Datum oder Haken antippen, auf der Seite platzieren und mit dem Finger verschieben.</div>
     </header>
 
     <label class="pick" id="gPick" for="gInput">
@@ -997,12 +1017,21 @@
         <div class="glayer" id="gLayer"></div>
       </div>
       <div class="hint" id="gHint" style="text-align:center;margin-top:8px">Wähle unten aus, was du einfügen möchtest.</div>
-      <div style="height:160px"></div>
+      <div style="height:240px"></div>
     </div>
 
     <div class="pbar hidden" id="gBar">
       <div class="pbar-in">
-        <div class="pbar-btns gtools">
+        <div class="seg gmode" id="gMode"><button data-v="sign" class="on">Unterschreiben</button><button data-v="mark">Markieren</button></div>
+        <div class="gcolors hidden" id="gColors" role="group" aria-label="Farbe"></div>
+        <div class="pbar-btns gtools hidden" id="gMarkTools">
+          <button class="tbtn" data-tool="hl" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l-3 3h5l1-1"/><path d="M9 15l8-8 3 3-8 8-3-3z"/></svg><span>Marker</span></button>
+          <button class="tbtn" data-tool="pen" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4L16 5l3 3L8 19z"/></svg><span>Stift</span></button>
+          <button class="tbtn" data-tool="arrow" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M10 5h9v9"/></svg><span>Pfeil</span></button>
+          <button class="tbtn" data-tool="rect" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="4" y="6" width="16" height="12" rx="1"/></svg><span>Rahmen</span></button>
+          <button class="tbtn" id="gAddNote"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12l-4 4H4z"/><path d="M16 20v-4h4M8 9h8M8 13h5"/></svg><span>Notiz</span></button>
+        </div>
+        <div class="pbar-btns gtools" id="gSignTools">
           <button class="tbtn" id="gAddSig"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3-4 5-9 7-9s-1 9 2 9 3-4 5-4 2 3 4 3"/></svg><span>Unterschrift</span></button>
           <button class="tbtn" id="gAddText"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg><span>Text</span></button>
           <button class="tbtn" id="gAddDate"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Datum</span></button>
@@ -1426,7 +1455,8 @@
   $('openSplit').addEventListener('click', function () { go('split'); });
   $('openPhotos').addEventListener('click', function () { go('photos'); });
   $('openScan').addEventListener('click', function () { go('scan'); });
-  $('openSign').addEventListener('click', function () { go('sign'); });
+  $('openSign').addEventListener('click', function () { gSetMode('sign'); go('sign'); });
+  $('openMark').addEventListener('click', function () { gSetMode('mark'); go('sign'); });
   $('openExtras').addEventListener('click', function () { go('extras'); });
   $('openConvert').addEventListener('click', function () { go('convert'); });
   $('backHome').addEventListener('click', function () { if (!state.busy) go('home'); });
@@ -3448,7 +3478,11 @@
 
   // ---------- Unterschreiben & Ausfüllen ----------
   var sg = { file: null, bytes: null, pdf: null, count: 0, page: 0, items: [], busy: false, result: null, token: 0,
-    sel: null, nextId: 1, vw: 1, vh: 1, editId: null, fields: [], ink: '#111111', txtColor: '#111111', renderTask: null };
+    sel: null, nextId: 1, vw: 1, vh: 1, editId: null, fields: [], ink: '#111111', txtColor: '#111111', renderTask: null,
+    mode: 'sign', tool: null, noteMode: false, colors: { hl: '#ffd60a', pen: '#e5322d', arrow: '#e5322d', rect: '#e5322d' } };
+  var MARK_COLORS = { hl: [['#ffd60a', 'Gelb'], ['#5ee37a', 'Grün'], ['#ff7ac8', 'Pink'], ['#6cc5ff', 'Blau']],
+    pen: [['#e5322d', 'Rot'], ['#1d5fd1', 'Blau'], ['#111111', 'Schwarz'], ['#1a9c4a', 'Grün']] };
+  var SHAPES = { hl: 1, pen: 1, arrow: 1, rect: 1 };
   var SIG_KEY = 'pdfw-signatures';
   window.__sg = sg; // für Tests
 
@@ -3461,8 +3495,80 @@
     $('gPrev').disabled = sg.page <= 0; $('gNext').disabled = sg.page >= sg.count - 1;
     $('gPageInfo').textContent = 'Seite ' + (sg.page + 1) + ' von ' + sg.count;
     var onPage = sg.items.filter(function (i) { return i.page === sg.page; }).length;
-    $('gHint').textContent = onPage ? 'Zum Verschieben ziehen. Antippen zeigt Größe ändern und Löschen.' : 'Wähle unten aus, was du einfügen möchtest.';
+    $('gHint').textContent = sg.tool ? (sg.tool === 'hl' || sg.tool === 'pen' ? 'Mit dem Finger auf der Seite zeichnen.' : 'Auf der Seite ziehen.') + ' Zum Blättern das Werkzeug wieder antippen.'
+      : onPage ? 'Zum Verschieben ziehen. Antippen zeigt Größe ändern und Löschen.' : 'Wähle unten aus, was du einfügen möchtest.';
+    $('gLayer').classList.toggle('drawing', !!sg.tool);
+    var u = $('gUndo'); if (u) u.disabled = !onPage;
   }
+
+  function gSetMode(m) {
+    sg.mode = m; gSetTool(null);
+    show($('gSignTools'), m === 'sign'); show($('gMarkTools'), m === 'mark');
+    $('gMode').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === m); });
+    $('gTitle').textContent = m === 'sign' ? 'Unterschreiben' : 'Markieren';
+    $('gSub').textContent = m === 'sign' ? 'Unterschrift, Text, Datum oder Haken antippen, auf der Seite platzieren und mit dem Finger verschieben.'
+      : 'Werkzeug wählen und direkt auf der Seite markieren, zeichnen oder Notizen anheften.';
+  }
+  function gSetTool(t) {
+    sg.tool = t; if (t) sg.sel = null;
+    $('gMarkTools').querySelectorAll('[data-tool]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.tool === t ? 'true' : 'false'); });
+    var box = $('gColors'); box.innerHTML = ''; show(box, !!t);
+    if (t) {
+      (MARK_COLORS[t] || MARK_COLORS.pen).forEach(function (c) {
+        var b = document.createElement('button'); b.className = 'gsw'; b.setAttribute('aria-label', c[1]);
+        b.setAttribute('aria-pressed', sg.colors[t] === c[0] ? 'true' : 'false');
+        b.innerHTML = '<span style="background:' + c[0] + '"></span>';
+        b.addEventListener('click', function () { sg.colors[t] = c[0]; box.querySelectorAll('.gsw').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); });
+        box.appendChild(b);
+      });
+      var u = document.createElement('button'); u.className = 'gundo'; u.id = 'gUndo'; u.textContent = 'Rückgängig';
+      u.addEventListener('click', function () {
+        for (var k = sg.items.length - 1; k >= 0; k--) if (sg.items[k].page === sg.page) { sg.items.splice(k, 1); break; }
+        drawItems();
+      });
+      box.appendChild(u);
+    }
+    if (sg.count) drawItems();
+  }
+  $('gMode').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) gSetMode(b.dataset.v); });
+  $('gMarkTools').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-tool]'); if (!b) return;
+    gSetTool(sg.tool === b.dataset.tool ? null : b.dataset.tool);
+  });
+  $('gAddNote').addEventListener('click', function () { gSetTool(null); sg.noteMode = true; openTextSheet(null); });
+
+  // Formen (Marker, Stift, Pfeil, Rahmen): Punkte in Seitenanteilen, Rahmen daraus berechnet
+  function shapeBounds(it) {
+    var S = stageSize(), padX = (it.sw * 0.5 + 0.004) + (it.type === 'arrow' ? it.sw * 2.5 : 0), padY = padX * S.w / S.h;
+    var minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+    it.pts.forEach(function (p) { minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]); minY = Math.min(minY, p[1]); maxY = Math.max(maxY, p[1]); });
+    it.x = minX - padX; it.y = minY - padY; it.w = maxX - minX + 2 * padX; it.h = maxY - minY + 2 * padY;
+  }
+  // SVG-Pfad in Einheiten von (W,H) relativ zur linken oberen Ecke des Elements
+  function shapePath(it, W, H) {
+    var P = it.pts.map(function (p) { return [(p[0] - it.x) * W, (p[1] - it.y) * H]; }), f = function (n) { return Math.round(n * 100) / 100; }, d = '';
+    if (it.type === 'rect') {
+      var a = P[0], b = P[P.length - 1];
+      d = 'M' + f(a[0]) + ' ' + f(a[1]) + ' L' + f(b[0]) + ' ' + f(a[1]) + ' L' + f(b[0]) + ' ' + f(b[1]) + ' L' + f(a[0]) + ' ' + f(b[1]) + ' Z';
+    } else if (it.type === 'arrow') {
+      var s0 = P[0], e0 = P[P.length - 1], ang = Math.atan2(e0[1] - s0[1], e0[0] - s0[0]), L = it.sw * W * 4.5;
+      var h1 = [e0[0] - L * Math.cos(ang - 0.45), e0[1] - L * Math.sin(ang - 0.45)], h2 = [e0[0] - L * Math.cos(ang + 0.45), e0[1] - L * Math.sin(ang + 0.45)];
+      d = 'M' + f(s0[0]) + ' ' + f(s0[1]) + ' L' + f(e0[0]) + ' ' + f(e0[1]) + ' M' + f(h1[0]) + ' ' + f(h1[1]) + ' L' + f(e0[0]) + ' ' + f(e0[1]) + ' L' + f(h2[0]) + ' ' + f(h2[1]);
+    } else {
+      d = 'M' + f(P[0][0]) + ' ' + f(P[0][1]);
+      if (P.length === 1) d += ' L' + f(P[0][0] + 0.1) + ' ' + f(P[0][1]);
+      for (var i = 1; i < P.length - 1; i++) d += ' Q' + f(P[i][0]) + ' ' + f(P[i][1]) + ' ' + f((P[i][0] + P[i + 1][0]) / 2) + ' ' + f((P[i][1] + P[i + 1][1]) / 2);
+      if (P.length > 1) d += ' L' + f(P[P.length - 1][0]) + ' ' + f(P[P.length - 1][1]);
+    }
+    return d;
+  }
+  function shapeSvg(it) {
+    var S = stageSize(), W = it.w * S.w, H = it.h * S.h;
+    return '<svg class="gshape" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '"><path d="' + shapePath(it, S.w, S.h) +
+      '" fill="none" stroke="' + it.color + '" stroke-width="' + (it.sw * S.w) + '" stroke-linecap="' + (it.type === 'hl' ? 'butt' : 'round') +
+      '" stroke-linejoin="round"' + (it.type === 'hl' ? ' stroke-opacity="0.45"' : '') + '/></svg>';
+  }
+  var SW = { hl: 0.022, pen: 0.004, arrow: 0.005, rect: 0.004 };
 
   $('gInput').addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; if (f) loadSignFile(f); });
   $('gChange').addEventListener('click', function () { $('gInput').click(); });
@@ -3576,7 +3682,8 @@
     var S = stageSize(), px = it.fs * S.h, lines = it.text.split('\n'), mw = 0;
     measureCtx.font = px + 'px Helvetica, Arial, sans-serif';
     lines.forEach(function (l) { mw = Math.max(mw, measureCtx.measureText(l).width); });
-    it.w = Math.max(mw, px * 0.5) / S.w; it.h = lines.length * 1.2 * px / S.h;
+    var pad = it.type === 'note' ? 0.8 * px : 0;
+    it.w = (Math.max(mw, px * 0.5) + pad) / S.w; it.h = (lines.length * 1.2 * px + pad) / S.h;
   }
 
   function drawItems() {
@@ -3584,13 +3691,15 @@
     var S = stageSize();
     sg.items.filter(function (it) { return it.page === sg.page; }).forEach(function (it) {
       var d = document.createElement('div');
-      d.className = 'gitem' + (it.type === 'text' || it.type === 'date' ? ' text' : '') + (sg.sel === it.id ? ' sel' : '');
+      d.className = 'gitem' + (it.type === 'text' || it.type === 'date' || it.type === 'note' ? ' text' : '') + (it.type === 'hl' ? ' hl' : '') + (sg.sel === it.id ? ' sel' : '');
       d.dataset.id = it.id;
       d.setAttribute('role', 'button');
-      d.setAttribute('aria-label', ({ sig: 'Unterschrift', text: 'Text', date: 'Datum', check: 'Haken', cross: 'Kreuz' })[it.type] + (it.text ? ': ' + it.text : ''));
-      if (it.type === 'text' || it.type === 'date') {
+      d.setAttribute('aria-label', ({ sig: 'Unterschrift', text: 'Text', date: 'Datum', check: 'Haken', cross: 'Kreuz', note: 'Notiz', hl: 'Markierung', pen: 'Zeichnung', arrow: 'Pfeil', rect: 'Rahmen' })[it.type] + (it.text ? ': ' + it.text : ''));
+      if (SHAPES[it.type]) {
+        shapeBounds(it); d.innerHTML = shapeSvg(it);
+      } else if (it.type === 'text' || it.type === 'date' || it.type === 'note') {
         textBox(it);
-        var t = document.createElement('div'); t.className = 'gtxt'; t.textContent = it.text;
+        var t = document.createElement('div'); t.className = 'gtxt' + (it.type === 'note' ? ' note' : ''); t.textContent = it.text;
         t.style.fontSize = (it.fs * S.h) + 'px'; t.style.color = it.color; d.appendChild(t);
       } else {
         var img = document.createElement('img'); img.src = it.src; img.alt = ''; d.appendChild(img);
@@ -3615,7 +3724,18 @@
   // Ziehen, Größe ändern, Antippen
   (function () {
     var layer = $('gLayer'), drag = null;
+    var draw = null;
     layer.addEventListener('pointerdown', function (e) {
+      if (sg.tool) {
+        e.preventDefault();
+        var S0 = stageSize(), pt = [(e.clientX - S0.r.left) / S0.w, (e.clientY - S0.r.top) / S0.h];
+        var it0 = { type: sg.tool, color: sg.colors[sg.tool], sw: SW[sg.tool], pts: [pt], id: sg.nextId++, page: sg.page };
+        if (sg.tool === 'arrow' || sg.tool === 'rect') it0.pts.push(pt.slice());
+        var el0 = document.createElement('div'); el0.className = 'gitem' + (sg.tool === 'hl' ? ' hl' : ''); layer.appendChild(el0);
+        draw = { it: it0, el: el0, id: e.pointerId, S: S0 };
+        try { layer.setPointerCapture(e.pointerId); } catch (x) {}
+        return;
+      }
       var el = e.target.closest('.gitem');
       if (!el) { if (sg.sel) { sg.sel = null; drawItems(); } return; }
       var it = findItem(+el.dataset.id); if (!it) return;
@@ -3623,23 +3743,58 @@
       e.preventDefault();
       var S = stageSize();
       drag = { it: it, el: el, sx: e.clientX, sy: e.clientY, x: it.x, y: it.y, w: it.w, h: it.h, fs: it.fs, S: S,
-        resize: !!e.target.closest('.gsize'), moved: false, id: e.pointerId };
+        resize: !!e.target.closest('.gsize'), moved: false, id: e.pointerId,
+        pts: it.pts ? it.pts.map(function (q) { return q.slice(); }) : null, sw: it.sw };
       try { el.setPointerCapture(e.pointerId); } catch (x) {}
       if (sg.sel !== it.id) { sg.sel = it.id; layer.querySelectorAll('.gitem').forEach(function (n) { n.classList.toggle('sel', n === el); }); }
     });
+    function paintDraw() {
+      var it = draw.it; shapeBounds(it);
+      draw.el.style.left = (it.x * 100) + '%'; draw.el.style.top = (it.y * 100) + '%';
+      draw.el.style.width = (it.w * 100) + '%'; draw.el.style.height = (it.h * 100) + '%';
+      draw.el.innerHTML = shapeSvg(it);
+    }
     layer.addEventListener('pointermove', function (e) {
+      if (draw && e.pointerId === draw.id) {
+        var S0 = draw.S, pt = [Math.min(1, Math.max(0, (e.clientX - S0.r.left) / S0.w)), Math.min(1, Math.max(0, (e.clientY - S0.r.top) / S0.h))], P = draw.it.pts;
+        if (draw.it.type === 'arrow' || draw.it.type === 'rect') P[1] = pt;
+        else { var l = P[P.length - 1]; if (Math.hypot((pt[0] - l[0]) * S0.w, (pt[1] - l[1]) * S0.h) < 2) return; P.push(pt); }
+        paintDraw(); return;
+      }
       if (!drag || e.pointerId !== drag.id) return;
       var dx = (e.clientX - drag.sx) / drag.S.w, dy = (e.clientY - drag.sy) / drag.S.h, it = drag.it;
       if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) > 3) drag.moved = true;
       if (drag.resize) {
         var nw = Math.max(0.03, Math.min(1, drag.w + dx)), k = nw / drag.w;
-        if (it.type === 'text' || it.type === 'date') { it.fs = Math.max(0.006, drag.fs * k); textBox(it); drag.el.querySelector('.gtxt').style.fontSize = (it.fs * drag.S.h) + 'px'; }
+        if (it.type === 'text' || it.type === 'date' || it.type === 'note') { it.fs = Math.max(0.006, drag.fs * k); textBox(it); drag.el.querySelector('.gtxt').style.fontSize = (it.fs * drag.S.h) + 'px'; }
+        else if (drag.pts) {
+          it.pts = drag.pts.map(function (q) { return [drag.x + (q[0] - drag.x) * k, drag.y + (q[1] - drag.y) * k]; }); it.sw = drag.sw * k;
+          shapeBounds(it); var sv = drag.el.querySelector('svg.gshape'); if (sv) sv.outerHTML = shapeSvg(it);
+        }
         else { it.w = nw; it.h = drag.h * k; }
-      } else { it.x = drag.x + dx; it.y = drag.y + dy; clampItem(it); }
+      } else {
+        it.x = drag.x + dx; it.y = drag.y + dy; clampItem(it);
+        if (drag.pts) { var ox = it.x - drag.x, oy = it.y - drag.y; it.pts = drag.pts.map(function (q) { return [q[0] + ox, q[1] + oy]; }); }
+      }
       drag.el.style.left = (it.x * 100) + '%'; drag.el.style.top = (it.y * 100) + '%';
       drag.el.style.width = (it.w * 100) + '%'; drag.el.style.height = (it.h * 100) + '%';
     });
-    function end(e) { if (drag && e.pointerId === drag.id) drag = null; }
+    function end(e) {
+      if (draw && e.pointerId === draw.id) {
+        var it = draw.it, P = it.pts, S0 = draw.S;
+        var span = Math.max.apply(null, P.map(function (p) { return Math.hypot((p[0] - P[0][0]) * S0.w, (p[1] - P[0][1]) * S0.h); }));
+        if ((it.type === 'arrow' || it.type === 'rect') && span < 8) { draw.el.remove(); }
+        else { if (it.type === 'hl' && P.length > 2) it.pts = simplifyHl(P, S0); sg.items.push(it); drawItems(); }
+        draw = null; return;
+      }
+      if (drag && e.pointerId === drag.id) drag = null;
+    }
+    // Textmarker: leicht glätten, damit er wie ein echter Marker wirkt
+    function simplifyHl(P, S0) {
+      var out = [P[0]];
+      for (var i = 1; i < P.length; i++) { var l = out[out.length - 1]; if (Math.hypot((P[i][0] - l[0]) * S0.w, (P[i][1] - l[1]) * S0.h) >= 6 || i === P.length - 1) out.push(P[i]); }
+      return out;
+    }
     layer.addEventListener('pointerup', end); layer.addEventListener('pointercancel', end);
     layer.addEventListener('click', function (e) {
       var el = e.target.closest('.gitem'); if (!el) return;
@@ -3654,7 +3809,7 @@
     var S = stageSize(), vt = Math.max(0, -S.r.top), vb = Math.min(S.h, window.innerHeight - S.r.top - 170);
     var tooSmall = vb - vt < 140, cy = tooSmall ? 0.5 : (vt + vb) / 2 / S.h;
     it.id = sg.nextId++; it.page = sg.page;
-    if (it.type === 'text' || it.type === 'date') textBox(it);
+    if (it.type === 'text' || it.type === 'date' || it.type === 'note') textBox(it);
     it.x = 0.5 - it.w / 2; it.y = cy - it.h / 2;
     // nicht genau auf ein vorhandenes Element legen
     for (var n = 0; n < 8 && sg.items.some(function (o) { return o.page === it.page && Math.abs(o.x - it.x) < 0.03 && Math.abs(o.y - it.y) < 0.03; }); n++) { it.x += 0.04; it.y += 0.04 * aspect(); }
@@ -3686,11 +3841,12 @@
     sg.editId = it ? it.id : null;
     $('txtInput').value = it ? it.text : '';
     if (it) sg.txtColor = it.color; txtSeg();
-    $('txtTitle').textContent = it ? 'Text bearbeiten' : 'Text';
+    if (it) sg.noteMode = it.type === 'note';
+    $('txtTitle').textContent = sg.noteMode ? (it ? 'Notiz bearbeiten' : 'Notiz') : (it ? 'Text bearbeiten' : 'Text');
     $('txtOk').textContent = it ? 'Übernehmen' : 'Einfügen';
     show($('txtSheet'), true); setTimeout(function () { $('txtInput').focus(); }, 50);
   }
-  $('gAddText').addEventListener('click', function () { openTextSheet(null); });
+  $('gAddText').addEventListener('click', function () { sg.noteMode = false; openTextSheet(null); });
   $('txtCancel').addEventListener('click', function () { show($('txtSheet'), false); });
   $('txtSheet').addEventListener('click', function (e) { if (e.target === this) show(this, false); });
   $('txtOk').addEventListener('click', function () {
@@ -3700,7 +3856,7 @@
     var it = sg.editId != null ? findItem(sg.editId) : null;
     show($('txtSheet'), false);
     if (it) { it.text = t; it.color = sg.txtColor; drawItems(); }
-    else addItem({ type: 'text', text: t, fs: 12 / sg.vh, color: sg.txtColor });
+    else addItem({ type: sg.noteMode ? 'note' : 'text', text: t, fs: (sg.noteMode ? 11 : 12) / sg.vh, color: sg.txtColor });
   });
   function gToast(t) { var e = $('gError'); e.textContent = t; show(e, true); clearTimeout(gToast.t); gToast.t = setTimeout(function () { show(e, false); }, 3500); }
 
@@ -3822,11 +3978,20 @@
       var pages = doc.getPages();
       sg.items.forEach(function (it) {
         var page = pages[it.page], V = visSize(page);
-        if (it.type === 'text' || it.type === 'date') {
-          var size = it.fs * V.h, lines = it.text.split('\n');
+        if (SHAPES[it.type]) {
+          var o = visToUser(page, it.x * V.w, V.h - it.y * V.h);
+          page.drawSvgPath(shapePath(it, V.w, V.h), { x: o.x, y: o.y, rotate: L.degrees(o.r), borderColor: hexRgb(it.color), borderWidth: it.sw * V.w,
+            borderOpacity: it.type === 'hl' ? 0.45 : 1, borderLineCap: it.type === 'hl' ? L.LineCapStyle.Butt : L.LineCapStyle.Round,
+            blendMode: it.type === 'hl' ? L.BlendMode.Multiply : undefined });
+        } else if (it.type === 'text' || it.type === 'date' || it.type === 'note') {
+          var size = it.fs * V.h, lines = it.text.split('\n'), pad = it.type === 'note' ? 0.4 * size : 0;
+          if (pad) {
+            var b0 = visToUser(page, it.x * V.w, V.h - (it.y + it.h) * V.h);
+            page.drawRectangle({ x: b0.x, y: b0.y, width: it.w * V.w, height: it.h * V.h, rotate: L.degrees(b0.r), color: L.rgb(1, 0.953, 0.659) });
+          }
           lines.forEach(function (ln, i) {
             if (!ln) return;
-            var p = visToUser(page, it.x * V.w, V.h - (it.y * V.h + size * (0.947 + 1.2 * i)));
+            var p = visToUser(page, it.x * V.w + pad, V.h - (it.y * V.h + pad + size * (0.947 + 1.2 * i)));
             page.drawText(ln, { x: p.x, y: p.y, size: size, font: font, color: hexRgb(it.color), rotate: L.degrees(p.r) });
           });
         } else {
@@ -3836,7 +4001,8 @@
       });
       return doc.save();
     }).then(function (out) {
-      sg.result = { data: out, name: sg.file.name.replace(/\.pdf$/i, '') + '_unterschrieben.pdf' };
+      var signed = sg.items.some(function (it) { return it.type === 'sig'; }), marked = sg.items.some(function (it) { return SHAPES[it.type] || it.type === 'note'; });
+      sg.result = { data: out, name: sg.file.name.replace(/\.pdf$/i, '') + (marked && !signed ? '_markiert' : signed ? '_unterschrieben' : '_ausgefuellt') + '.pdf' };
       $('gInfo').textContent = sg.result.name + ', ' + fmt(out.length);
       $('gSaveMsg').className = 'msg hidden';
       show($('gResult'), true); show($('gBody'), false);
